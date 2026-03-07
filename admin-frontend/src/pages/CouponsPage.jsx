@@ -29,7 +29,7 @@ function resolveApiErrorMessage(apiError, fallbackMessage) {
   }
 
   if (!apiError?.response) {
-    return "Backend API not reachable. Please ensure API is running on http://127.0.0.1:5037.";
+    return "Backend API not reachable. Please verify your Railway backend URL in VITE_API_BASE_URL.";
   }
 
   return fallbackMessage;

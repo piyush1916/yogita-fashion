@@ -48,7 +48,7 @@ npm run build
 `.env.example` contains:
 
 ```env
-VITE_API_BASE_URL=http://localhost:5000/api
+VITE_API_BASE_URL=https://yogita-fashion-production.up.railway.app
 ```
 
 `VITE_API_BASE_URL` is used in `src/api/axios.js` and is ready for ASP.NET Core API integration.

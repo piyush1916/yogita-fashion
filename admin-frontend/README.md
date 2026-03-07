@@ -13,7 +13,7 @@ npm install
 2. Create `.env` from `.env.example` and adjust API URL if needed:
 
 ```env
-VITE_API_BASE_URL=http://localhost:5037
+VITE_API_BASE_URL=https://yogita-fashion-production.up.railway.app
 ```
 
 3. Start admin app:
