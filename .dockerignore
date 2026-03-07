@@ -1,0 +1,10 @@
+.git
+.gitignore
+.dotnet
+**/node_modules
+**/bin
+**/obj
+**/.vs
+*.zip
+admin-frontend/dist
+store-frontend/dist
