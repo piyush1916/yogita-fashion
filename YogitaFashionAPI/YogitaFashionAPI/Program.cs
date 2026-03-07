@@ -4,13 +4,9 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 var frontendCorsPolicy = "FrontendCors";
-var backendUrl = builder.Configuration["BackendUrl"] ?? "http://127.0.0.1:5037";
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "YogitaFashion_SuperSecret_ChangeThisInProduction_2026";
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "YogitaFashionAPI";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "YogitaFashionClients";
-
-// Keep API URL stable for both store-frontend and admin-frontend.
-builder.WebHost.UseUrls(backendUrl);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -73,4 +69,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();
+app.Run();  
