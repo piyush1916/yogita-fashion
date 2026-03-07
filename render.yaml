@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: yogita-fashion-api
+    runtime: docker
+    rootDir: YogitaFashionAPI/YogitaFashionAPI
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: Jwt__Issuer
+        value: YogitaFashionAPI
+      - key: Jwt__Audience
+        value: YogitaFashionClients
+      - key: Jwt__Key
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
