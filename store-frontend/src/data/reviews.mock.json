@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1",
+    "name": "Alice",
+    "rating": 5,
+    "comment": "Love these products!"
+  },
+  {
+    "id": "2",
+    "name": "Bhavna",
+    "rating": 4,
+    "comment": "Good quality and fast shipping."
+  },
+  {
+    "id": "3",
+    "name": "Chitra",
+    "rating": 5,
+    "comment": "Amazing customer service."
+  },
+  {
+    "id": "4",
+    "name": "Divya",
+    "rating": 4,
+    "comment": "Nice designs."
+  }
+]

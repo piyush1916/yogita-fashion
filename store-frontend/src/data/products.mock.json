@@ -1,0 +1,1882 @@
+[
+  {
+    "id": "1",
+    "title": "Product 1 T-Shirts",
+    "category": "T-Shirts",
+    "images": [
+      "https://via.placeholder.com/400x400?text=Product+1",
+      "https://via.placeholder.com/400x400?text=Alt+1"
+    ],
+    "price": 560,
+    "mrp": 981,
+    "isNew": false,
+    "isBestSeller": false,
+    "colors": [
+      "Black",
+      "White",
+      "Blue"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Black",
+        "stock": 3
+      },
+      {
+        "size": "S",
+        "color": "White",
+        "stock": 1
+      },
+      {
+        "size": "S",
+        "color": "Blue",
+        "stock": 18
+      },
+      {
+        "size": "M",
+        "color": "Black",
+        "stock": 9
+      },
+      {
+        "size": "M",
+        "color": "White",
+        "stock": 1
+      },
+      {
+        "size": "M",
+        "color": "Blue",
+        "stock": 1
+      },
+      {
+        "size": "L",
+        "color": "Black",
+        "stock": 2
+      },
+      {
+        "size": "L",
+        "color": "White",
+        "stock": 0
+      },
+      {
+        "size": "L",
+        "color": "Blue",
+        "stock": 10
+      },
+      {
+        "size": "XL",
+        "color": "Black",
+        "stock": 9
+      },
+      {
+        "size": "XL",
+        "color": "White",
+        "stock": 17
+      },
+      {
+        "size": "XL",
+        "color": "Blue",
+        "stock": 8
+      }
+    ],
+    "shortDescription": "A stylish women's fashion item.",
+    "details": {
+      "material": "Cotton",
+      "fit": "Regular",
+      "style": "Casual",
+      "sleeve": "Full",
+      "washCare": "Machine wash"
+    }
+  },
+  {
+    "id": "2",
+    "title": "Product 2 Shirts & Tops",
+    "category": "Shirts & Tops",
+    "images": [
+      "https://via.placeholder.com/400x400?text=Product+2",
+      "https://via.placeholder.com/400x400?text=Alt+2"
+    ],
+    "price": 704,
+    "mrp": 772,
+    "isNew": false,
+    "isBestSeller": false,
+    "colors": [
+      "Black",
+      "White",
+      "Blue"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Black",
+        "stock": 5
+      },
+      {
+        "size": "S",
+        "color": "White",
+        "stock": 11
+      },
+      {
+        "size": "S",
+        "color": "Blue",
+        "stock": 17
+      },
+      {
+        "size": "M",
+        "color": "Black",
+        "stock": 10
+      },
+      {
+        "size": "M",
+        "color": "White",
+        "stock": 14
+      },
+      {
+        "size": "M",
+        "color": "Blue",
+        "stock": 10
+      },
+      {
+        "size": "L",
+        "color": "Black",
+        "stock": 10
+      },
+      {
+        "size": "L",
+        "color": "White",
+        "stock": 1
+      },
+      {
+        "size": "L",
+        "color": "Blue",
+        "stock": 18
+      },
+      {
+        "size": "XL",
+        "color": "Black",
+        "stock": 15
+      },
+      {
+        "size": "XL",
+        "color": "White",
+        "stock": 7
+      },
+      {
+        "size": "XL",
+        "color": "Blue",
+        "stock": 3
+      }
+    ],
+    "shortDescription": "A stylish women's fashion item.",
+    "details": {
+      "material": "Cotton",
+      "fit": "Regular",
+      "style": "Casual",
+      "sleeve": "Full",
+      "washCare": "Machine wash"
+    }
+  },
+  {
+    "id": "3",
+    "title": "Product 3 Jeans",
+    "category": "Jeans",
+    "images": [
+      "https://via.placeholder.com/400x400?text=Product+3",
+      "https://via.placeholder.com/400x400?text=Alt+3"
+    ],
+    "price": 499,
+    "mrp": 402,
+    "isNew": true,
+    "isBestSeller": false,
+    "colors": [
+      "Black",
+      "White",
+      "Blue"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Black",
+        "stock": 1
+      },
+      {
+        "size": "S",
+        "color": "White",
+        "stock": 15
+      },
+      {
+        "size": "S",
+        "color": "Blue",
+        "stock": 14
+      },
+      {
+        "size": "M",
+        "color": "Black",
+        "stock": 7
+      },
+      {
+        "size": "M",
+        "color": "White",
+        "stock": 15
+      },
+      {
+        "size": "M",
+        "color": "Blue",
+        "stock": 10
+      },
+      {
+        "size": "L",
+        "color": "Black",
+        "stock": 19
+      },
+      {
+        "size": "L",
+        "color": "White",
+        "stock": 1
+      },
+      {
+        "size": "L",
+        "color": "Blue",
+        "stock": 1
+      },
+      {
+        "size": "XL",
+        "color": "Black",
+        "stock": 10
+      },
+      {
+        "size": "XL",
+        "color": "White",
+        "stock": 4
+      },
+      {
+        "size": "XL",
+        "color": "Blue",
+        "stock": 9
+      }
+    ],
+    "shortDescription": "A stylish women's fashion item.",
+    "details": {
+      "material": "Cotton",
+      "fit": "Regular",
+      "style": "Casual",
+      "sleeve": "Full",
+      "washCare": "Machine wash"
+    }
+  },
+  {
+    "id": "4",
+    "title": "Product 4 Kurtis",
+    "category": "Kurtis",
+    "images": [
+      "https://via.placeholder.com/400x400?text=Product+4",
+      "https://via.placeholder.com/400x400?text=Alt+4"
+    ],
+    "price": 495,
+    "mrp": 369,
+    "isNew": false,
+    "isBestSeller": true,
+    "colors": [
+      "Black",
+      "White",
+      "Blue"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Black",
+        "stock": 4
+      },
+      {
+        "size": "S",
+        "color": "White",
+        "stock": 16
+      },
+      {
+        "size": "S",
+        "color": "Blue",
+        "stock": 13
+      },
+      {
+        "size": "M",
+        "color": "Black",
+        "stock": 16
+      },
+      {
+        "size": "M",
+        "color": "White",
+        "stock": 3
+      },
+      {
+        "size": "M",
+        "color": "Blue",
+        "stock": 0
+      },
+      {
+        "size": "L",
+        "color": "Black",
+        "stock": 17
+      },
+      {
+        "size": "L",
+        "color": "White",
+        "stock": 3
+      },
+      {
+        "size": "L",
+        "color": "Blue",
+        "stock": 1
+      },
+      {
+        "size": "XL",
+        "color": "Black",
+        "stock": 0
+      },
+      {
+        "size": "XL",
+        "color": "White",
+        "stock": 11
+      },
+      {
+        "size": "XL",
+        "color": "Blue",
+        "stock": 19
+      }
+    ],
+    "shortDescription": "A stylish women's fashion item.",
+    "details": {
+      "material": "Cotton",
+      "fit": "Regular",
+      "style": "Casual",
+      "sleeve": "Full",
+      "washCare": "Machine wash"
+    }
+  },
+  {
+    "id": "5",
+    "title": "Product 5 T-Shirts",
+    "category": "T-Shirts",
+    "images": [
+      "https://via.placeholder.com/400x400?text=Product+5",
+      "https://via.placeholder.com/400x400?text=Alt+5"
+    ],
+    "price": 589,
+    "mrp": 169,
+    "isNew": false,
+    "isBestSeller": false,
+    "colors": [
+      "Black",
+      "White",
+      "Blue"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Black",
+        "stock": 3
+      },
+      {
+        "size": "S",
+        "color": "White",
+        "stock": 14
+      },
+      {
+        "size": "S",
+        "color": "Blue",
+        "stock": 9
+      },
+      {
+        "size": "M",
+        "color": "Black",
+        "stock": 6
+      },
+      {
+        "size": "M",
+        "color": "White",
+        "stock": 0
+      },
+      {
+        "size": "M",
+        "color": "Blue",
+        "stock": 2
+      },
+      {
+        "size": "L",
+        "color": "Black",
+        "stock": 11
+      },
+      {
+        "size": "L",
+        "color": "White",
+        "stock": 15
+      },
+      {
+        "size": "L",
+        "color": "Blue",
+        "stock": 19
+      },
+      {
+        "size": "XL",
+        "color": "Black",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "White",
+        "stock": 18
+      },
+      {
+        "size": "XL",
+        "color": "Blue",
+        "stock": 14
+      }
+    ],
+    "shortDescription": "A stylish women's fashion item.",
+    "details": {
+      "material": "Cotton",
+      "fit": "Regular",
+      "style": "Casual",
+      "sleeve": "Full",
+      "washCare": "Machine wash"
+    }
+  },
+  {
+    "id": "6",
+    "title": "Product 6 Shirts & Tops",
+    "category": "Shirts & Tops",
+    "images": [
+      "https://via.placeholder.com/400x400?text=Product+6",
+      "https://via.placeholder.com/400x400?text=Alt+6"
+    ],
+    "price": 900,
+    "mrp": 600,
+    "isNew": true,
+    "isBestSeller": false,
+    "colors": [
+      "Black",
+      "White",
+      "Blue"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Black",
+        "stock": 9
+      },
+      {
+        "size": "S",
+        "color": "White",
+        "stock": 8
+      },
+      {
+        "size": "S",
+        "color": "Blue",
+        "stock": 8
+      },
+      {
+        "size": "M",
+        "color": "Black",
+        "stock": 13
+      },
+      {
+        "size": "M",
+        "color": "White",
+        "stock": 3
+      },
+      {
+        "size": "M",
+        "color": "Blue",
+        "stock": 13
+      },
+      {
+        "size": "L",
+        "color": "Black",
+        "stock": 7
+      },
+      {
+        "size": "L",
+        "color": "White",
+        "stock": 17
+      },
+      {
+        "size": "L",
+        "color": "Blue",
+        "stock": 13
+      },
+      {
+        "size": "XL",
+        "color": "Black",
+        "stock": 10
+      },
+      {
+        "size": "XL",
+        "color": "White",
+        "stock": 15
+      },
+      {
+        "size": "XL",
+        "color": "Blue",
+        "stock": 11
+      }
+    ],
+    "shortDescription": "A stylish women's fashion item.",
+    "details": {
+      "material": "Cotton",
+      "fit": "Regular",
+      "style": "Casual",
+      "sleeve": "Full",
+      "washCare": "Machine wash"
+    }
+  },
+  {
+    "id": "7",
+    "title": "Product 7 Jeans",
+    "category": "Jeans",
+    "images": [
+      "https://via.placeholder.com/400x400?text=Product+7",
+      "https://via.placeholder.com/400x400?text=Alt+7"
+    ],
+    "price": 323,
+    "mrp": 159,
+    "isNew": false,
+    "isBestSeller": false,
+    "colors": [
+      "Black",
+      "White",
+      "Blue"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Black",
+        "stock": 8
+      },
+      {
+        "size": "S",
+        "color": "White",
+        "stock": 6
+      },
+      {
+        "size": "S",
+        "color": "Blue",
+        "stock": 9
+      },
+      {
+        "size": "M",
+        "color": "Black",
+        "stock": 16
+      },
+      {
+        "size": "M",
+        "color": "White",
+        "stock": 0
+      },
+      {
+        "size": "M",
+        "color": "Blue",
+        "stock": 17
+      },
+      {
+        "size": "L",
+        "color": "Black",
+        "stock": 1
+      },
+      {
+        "size": "L",
+        "color": "White",
+        "stock": 16
+      },
+      {
+        "size": "L",
+        "color": "Blue",
+        "stock": 4
+      },
+      {
+        "size": "XL",
+        "color": "Black",
+        "stock": 16
+      },
+      {
+        "size": "XL",
+        "color": "White",
+        "stock": 17
+      },
+      {
+        "size": "XL",
+        "color": "Blue",
+        "stock": 10
+      }
+    ],
+    "shortDescription": "A stylish women's fashion item.",
+    "details": {
+      "material": "Cotton",
+      "fit": "Regular",
+      "style": "Casual",
+      "sleeve": "Full",
+      "washCare": "Machine wash"
+    }
+  },
+  {
+    "id": "8",
+    "title": "Product 8 Kurtis",
+    "category": "Kurtis",
+    "images": [
+      "https://via.placeholder.com/400x400?text=Product+8",
+      "https://via.placeholder.com/400x400?text=Alt+8"
+    ],
+    "price": 139,
+    "mrp": 1024,
+    "isNew": false,
+    "isBestSeller": true,
+    "colors": [
+      "Black",
+      "White",
+      "Blue"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Black",
+        "stock": 17
+      },
+      {
+        "size": "S",
+        "color": "White",
+        "stock": 0
+      },
+      {
+        "size": "S",
+        "color": "Blue",
+        "stock": 9
+      },
+      {
+        "size": "M",
+        "color": "Black",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "White",
+        "stock": 5
+      },
+      {
+        "size": "M",
+        "color": "Blue",
+        "stock": 2
+      },
+      {
+        "size": "L",
+        "color": "Black",
+        "stock": 17
+      },
+      {
+        "size": "L",
+        "color": "White",
+        "stock": 16
+      },
+      {
+        "size": "L",
+        "color": "Blue",
+        "stock": 15
+      },
+      {
+        "size": "XL",
+        "color": "Black",
+        "stock": 10
+      },
+      {
+        "size": "XL",
+        "color": "White",
+        "stock": 19
+      },
+      {
+        "size": "XL",
+        "color": "Blue",
+        "stock": 3
+      }
+    ],
+    "shortDescription": "A stylish women's fashion item.",
+    "details": {
+      "material": "Cotton",
+      "fit": "Regular",
+      "style": "Casual",
+      "sleeve": "Full",
+      "washCare": "Machine wash"
+    }
+  },
+  {
+    "id": "9",
+    "title": "Product 9 T-Shirts",
+    "category": "T-Shirts",
+    "images": [
+      "https://via.placeholder.com/400x400?text=Product+9",
+      "https://via.placeholder.com/400x400?text=Alt+9"
+    ],
+    "price": 825,
+    "mrp": 1018,
+    "isNew": true,
+    "isBestSeller": false,
+    "colors": [
+      "Black",
+      "White",
+      "Blue"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Black",
+        "stock": 9
+      },
+      {
+        "size": "S",
+        "color": "White",
+        "stock": 19
+      },
+      {
+        "size": "S",
+        "color": "Blue",
+        "stock": 14
+      },
+      {
+        "size": "M",
+        "color": "Black",
+        "stock": 9
+      },
+      {
+        "size": "M",
+        "color": "White",
+        "stock": 7
+      },
+      {
+        "size": "M",
+        "color": "Blue",
+        "stock": 6
+      },
+      {
+        "size": "L",
+        "color": "Black",
+        "stock": 16
+      },
+      {
+        "size": "L",
+        "color": "White",
+        "stock": 19
+      },
+      {
+        "size": "L",
+        "color": "Blue",
+        "stock": 4
+      },
+      {
+        "size": "XL",
+        "color": "Black",
+        "stock": 17
+      },
+      {
+        "size": "XL",
+        "color": "White",
+        "stock": 7
+      },
+      {
+        "size": "XL",
+        "color": "Blue",
+        "stock": 19
+      }
+    ],
+    "shortDescription": "A stylish women's fashion item.",
+    "details": {
+      "material": "Cotton",
+      "fit": "Regular",
+      "style": "Casual",
+      "sleeve": "Full",
+      "washCare": "Machine wash"
+    }
+  },
+  {
+    "id": "10",
+    "title": "Product 10 Shirts & Tops",
+    "category": "Shirts & Tops",
+    "images": [
+      "https://via.placeholder.com/400x400?text=Product+10",
+      "https://via.placeholder.com/400x400?text=Alt+10"
+    ],
+    "price": 453,
+    "mrp": 952,
+    "isNew": false,
+    "isBestSeller": false,
+    "colors": [
+      "Black",
+      "White",
+      "Blue"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Black",
+        "stock": 1
+      },
+      {
+        "size": "S",
+        "color": "White",
+        "stock": 15
+      },
+      {
+        "size": "S",
+        "color": "Blue",
+        "stock": 13
+      },
+      {
+        "size": "M",
+        "color": "Black",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "White",
+        "stock": 6
+      },
+      {
+        "size": "M",
+        "color": "Blue",
+        "stock": 16
+      },
+      {
+        "size": "L",
+        "color": "Black",
+        "stock": 19
+      },
+      {
+        "size": "L",
+        "color": "White",
+        "stock": 5
+      },
+      {
+        "size": "L",
+        "color": "Blue",
+        "stock": 3
+      },
+      {
+        "size": "XL",
+        "color": "Black",
+        "stock": 9
+      },
+      {
+        "size": "XL",
+        "color": "White",
+        "stock": 4
+      },
+      {
+        "size": "XL",
+        "color": "Blue",
+        "stock": 9
+      }
+    ],
+    "shortDescription": "A stylish women's fashion item.",
+    "details": {
+      "material": "Cotton",
+      "fit": "Regular",
+      "style": "Casual",
+      "sleeve": "Full",
+      "washCare": "Machine wash"
+    }
+  },
+  {
+    "id": "11",
+    "title": "Product 11 Jeans",
+    "category": "Jeans",
+    "images": [
+      "https://via.placeholder.com/400x400?text=Product+11",
+      "https://via.placeholder.com/400x400?text=Alt+11"
+    ],
+    "price": 926,
+    "mrp": 839,
+    "isNew": false,
+    "isBestSeller": false,
+    "colors": [
+      "Black",
+      "White",
+      "Blue"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Black",
+        "stock": 15
+      },
+      {
+        "size": "S",
+        "color": "White",
+        "stock": 8
+      },
+      {
+        "size": "S",
+        "color": "Blue",
+        "stock": 7
+      },
+      {
+        "size": "M",
+        "color": "Black",
+        "stock": 6
+      },
+      {
+        "size": "M",
+        "color": "White",
+        "stock": 19
+      },
+      {
+        "size": "M",
+        "color": "Blue",
+        "stock": 10
+      },
+      {
+        "size": "L",
+        "color": "Black",
+        "stock": 15
+      },
+      {
+        "size": "L",
+        "color": "White",
+        "stock": 15
+      },
+      {
+        "size": "L",
+        "color": "Blue",
+        "stock": 1
+      },
+      {
+        "size": "XL",
+        "color": "Black",
+        "stock": 10
+      },
+      {
+        "size": "XL",
+        "color": "White",
+        "stock": 10
+      },
+      {
+        "size": "XL",
+        "color": "Blue",
+        "stock": 2
+      }
+    ],
+    "shortDescription": "A stylish women's fashion item.",
+    "details": {
+      "material": "Cotton",
+      "fit": "Regular",
+      "style": "Casual",
+      "sleeve": "Full",
+      "washCare": "Machine wash"
+    }
+  },
+  {
+    "id": "12",
+    "title": "Product 12 Kurtis",
+    "category": "Kurtis",
+    "images": [
+      "https://via.placeholder.com/400x400?text=Product+12",
+      "https://via.placeholder.com/400x400?text=Alt+12"
+    ],
+    "price": 767,
+    "mrp": 729,
+    "isNew": true,
+    "isBestSeller": true,
+    "colors": [
+      "Black",
+      "White",
+      "Blue"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Black",
+        "stock": 8
+      },
+      {
+        "size": "S",
+        "color": "White",
+        "stock": 15
+      },
+      {
+        "size": "S",
+        "color": "Blue",
+        "stock": 4
+      },
+      {
+        "size": "M",
+        "color": "Black",
+        "stock": 3
+      },
+      {
+        "size": "M",
+        "color": "White",
+        "stock": 16
+      },
+      {
+        "size": "M",
+        "color": "Blue",
+        "stock": 15
+      },
+      {
+        "size": "L",
+        "color": "Black",
+        "stock": 18
+      },
+      {
+        "size": "L",
+        "color": "White",
+        "stock": 2
+      },
+      {
+        "size": "L",
+        "color": "Blue",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Black",
+        "stock": 4
+      },
+      {
+        "size": "XL",
+        "color": "White",
+        "stock": 7
+      },
+      {
+        "size": "XL",
+        "color": "Blue",
+        "stock": 4
+      }
+    ],
+    "shortDescription": "A stylish women's fashion item.",
+    "details": {
+      "material": "Cotton",
+      "fit": "Regular",
+      "style": "Casual",
+      "sleeve": "Full",
+      "washCare": "Machine wash"
+    }
+  },
+  {
+    "id": "13",
+    "title": "Product 13 T-Shirts",
+    "category": "T-Shirts",
+    "images": [
+      "https://via.placeholder.com/400x400?text=Product+13",
+      "https://via.placeholder.com/400x400?text=Alt+13"
+    ],
+    "price": 276,
+    "mrp": 931,
+    "isNew": false,
+    "isBestSeller": false,
+    "colors": [
+      "Black",
+      "White",
+      "Blue"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Black",
+        "stock": 7
+      },
+      {
+        "size": "S",
+        "color": "White",
+        "stock": 10
+      },
+      {
+        "size": "S",
+        "color": "Blue",
+        "stock": 10
+      },
+      {
+        "size": "M",
+        "color": "Black",
+        "stock": 0
+      },
+      {
+        "size": "M",
+        "color": "White",
+        "stock": 14
+      },
+      {
+        "size": "M",
+        "color": "Blue",
+        "stock": 15
+      },
+      {
+        "size": "L",
+        "color": "Black",
+        "stock": 4
+      },
+      {
+        "size": "L",
+        "color": "White",
+        "stock": 17
+      },
+      {
+        "size": "L",
+        "color": "Blue",
+        "stock": 18
+      },
+      {
+        "size": "XL",
+        "color": "Black",
+        "stock": 16
+      },
+      {
+        "size": "XL",
+        "color": "White",
+        "stock": 4
+      },
+      {
+        "size": "XL",
+        "color": "Blue",
+        "stock": 2
+      }
+    ],
+    "shortDescription": "A stylish women's fashion item.",
+    "details": {
+      "material": "Cotton",
+      "fit": "Regular",
+      "style": "Casual",
+      "sleeve": "Full",
+      "washCare": "Machine wash"
+    }
+  },
+  {
+    "id": "14",
+    "title": "Product 14 Shirts & Tops",
+    "category": "Shirts & Tops",
+    "images": [
+      "https://via.placeholder.com/400x400?text=Product+14",
+      "https://via.placeholder.com/400x400?text=Alt+14"
+    ],
+    "price": 145,
+    "mrp": 858,
+    "isNew": false,
+    "isBestSeller": false,
+    "colors": [
+      "Black",
+      "White",
+      "Blue"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Black",
+        "stock": 3
+      },
+      {
+        "size": "S",
+        "color": "White",
+        "stock": 18
+      },
+      {
+        "size": "S",
+        "color": "Blue",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Black",
+        "stock": 7
+      },
+      {
+        "size": "M",
+        "color": "White",
+        "stock": 15
+      },
+      {
+        "size": "M",
+        "color": "Blue",
+        "stock": 1
+      },
+      {
+        "size": "L",
+        "color": "Black",
+        "stock": 4
+      },
+      {
+        "size": "L",
+        "color": "White",
+        "stock": 3
+      },
+      {
+        "size": "L",
+        "color": "Blue",
+        "stock": 8
+      },
+      {
+        "size": "XL",
+        "color": "Black",
+        "stock": 8
+      },
+      {
+        "size": "XL",
+        "color": "White",
+        "stock": 16
+      },
+      {
+        "size": "XL",
+        "color": "Blue",
+        "stock": 17
+      }
+    ],
+    "shortDescription": "A stylish women's fashion item.",
+    "details": {
+      "material": "Cotton",
+      "fit": "Regular",
+      "style": "Casual",
+      "sleeve": "Full",
+      "washCare": "Machine wash"
+    }
+  },
+  {
+    "id": "15",
+    "title": "Product 15 Jeans",
+    "category": "Jeans",
+    "images": [
+      "https://via.placeholder.com/400x400?text=Product+15",
+      "https://via.placeholder.com/400x400?text=Alt+15"
+    ],
+    "price": 546,
+    "mrp": 695,
+    "isNew": true,
+    "isBestSeller": false,
+    "colors": [
+      "Black",
+      "White",
+      "Blue"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Black",
+        "stock": 9
+      },
+      {
+        "size": "S",
+        "color": "White",
+        "stock": 14
+      },
+      {
+        "size": "S",
+        "color": "Blue",
+        "stock": 19
+      },
+      {
+        "size": "M",
+        "color": "Black",
+        "stock": 7
+      },
+      {
+        "size": "M",
+        "color": "White",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Blue",
+        "stock": 9
+      },
+      {
+        "size": "L",
+        "color": "Black",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "White",
+        "stock": 11
+      },
+      {
+        "size": "L",
+        "color": "Blue",
+        "stock": 0
+      },
+      {
+        "size": "XL",
+        "color": "Black",
+        "stock": 10
+      },
+      {
+        "size": "XL",
+        "color": "White",
+        "stock": 3
+      },
+      {
+        "size": "XL",
+        "color": "Blue",
+        "stock": 7
+      }
+    ],
+    "shortDescription": "A stylish women's fashion item.",
+    "details": {
+      "material": "Cotton",
+      "fit": "Regular",
+      "style": "Casual",
+      "sleeve": "Full",
+      "washCare": "Machine wash"
+    }
+  },
+  {
+    "id": "16",
+    "title": "Product 16 Kurtis",
+    "category": "Kurtis",
+    "images": [
+      "https://via.placeholder.com/400x400?text=Product+16",
+      "https://via.placeholder.com/400x400?text=Alt+16"
+    ],
+    "price": 527,
+    "mrp": 991,
+    "isNew": false,
+    "isBestSeller": true,
+    "colors": [
+      "Black",
+      "White",
+      "Blue"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Black",
+        "stock": 18
+      },
+      {
+        "size": "S",
+        "color": "White",
+        "stock": 12
+      },
+      {
+        "size": "S",
+        "color": "Blue",
+        "stock": 6
+      },
+      {
+        "size": "M",
+        "color": "Black",
+        "stock": 3
+      },
+      {
+        "size": "M",
+        "color": "White",
+        "stock": 2
+      },
+      {
+        "size": "M",
+        "color": "Blue",
+        "stock": 7
+      },
+      {
+        "size": "L",
+        "color": "Black",
+        "stock": 3
+      },
+      {
+        "size": "L",
+        "color": "White",
+        "stock": 19
+      },
+      {
+        "size": "L",
+        "color": "Blue",
+        "stock": 16
+      },
+      {
+        "size": "XL",
+        "color": "Black",
+        "stock": 11
+      },
+      {
+        "size": "XL",
+        "color": "White",
+        "stock": 17
+      },
+      {
+        "size": "XL",
+        "color": "Blue",
+        "stock": 19
+      }
+    ],
+    "shortDescription": "A stylish women's fashion item.",
+    "details": {
+      "material": "Cotton",
+      "fit": "Regular",
+      "style": "Casual",
+      "sleeve": "Full",
+      "washCare": "Machine wash"
+    }
+  },
+  {
+    "id": "17",
+    "title": "Product 17 T-Shirts",
+    "category": "T-Shirts",
+    "images": [
+      "https://via.placeholder.com/400x400?text=Product+17",
+      "https://via.placeholder.com/400x400?text=Alt+17"
+    ],
+    "price": 565,
+    "mrp": 199,
+    "isNew": false,
+    "isBestSeller": false,
+    "colors": [
+      "Black",
+      "White",
+      "Blue"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Black",
+        "stock": 14
+      },
+      {
+        "size": "S",
+        "color": "White",
+        "stock": 1
+      },
+      {
+        "size": "S",
+        "color": "Blue",
+        "stock": 4
+      },
+      {
+        "size": "M",
+        "color": "Black",
+        "stock": 14
+      },
+      {
+        "size": "M",
+        "color": "White",
+        "stock": 2
+      },
+      {
+        "size": "M",
+        "color": "Blue",
+        "stock": 16
+      },
+      {
+        "size": "L",
+        "color": "Black",
+        "stock": 3
+      },
+      {
+        "size": "L",
+        "color": "White",
+        "stock": 5
+      },
+      {
+        "size": "L",
+        "color": "Blue",
+        "stock": 9
+      },
+      {
+        "size": "XL",
+        "color": "Black",
+        "stock": 10
+      },
+      {
+        "size": "XL",
+        "color": "White",
+        "stock": 16
+      },
+      {
+        "size": "XL",
+        "color": "Blue",
+        "stock": 6
+      }
+    ],
+    "shortDescription": "A stylish women's fashion item.",
+    "details": {
+      "material": "Cotton",
+      "fit": "Regular",
+      "style": "Casual",
+      "sleeve": "Full",
+      "washCare": "Machine wash"
+    }
+  },
+  {
+    "id": "18",
+    "title": "Product 18 Shirts & Tops",
+    "category": "Shirts & Tops",
+    "images": [
+      "https://via.placeholder.com/400x400?text=Product+18",
+      "https://via.placeholder.com/400x400?text=Alt+18"
+    ],
+    "price": 812,
+    "mrp": 840,
+    "isNew": true,
+    "isBestSeller": false,
+    "colors": [
+      "Black",
+      "White",
+      "Blue"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Black",
+        "stock": 16
+      },
+      {
+        "size": "S",
+        "color": "White",
+        "stock": 4
+      },
+      {
+        "size": "S",
+        "color": "Blue",
+        "stock": 2
+      },
+      {
+        "size": "M",
+        "color": "Black",
+        "stock": 3
+      },
+      {
+        "size": "M",
+        "color": "White",
+        "stock": 8
+      },
+      {
+        "size": "M",
+        "color": "Blue",
+        "stock": 2
+      },
+      {
+        "size": "L",
+        "color": "Black",
+        "stock": 10
+      },
+      {
+        "size": "L",
+        "color": "White",
+        "stock": 2
+      },
+      {
+        "size": "L",
+        "color": "Blue",
+        "stock": 7
+      },
+      {
+        "size": "XL",
+        "color": "Black",
+        "stock": 2
+      },
+      {
+        "size": "XL",
+        "color": "White",
+        "stock": 4
+      },
+      {
+        "size": "XL",
+        "color": "Blue",
+        "stock": 8
+      }
+    ],
+    "shortDescription": "A stylish women's fashion item.",
+    "details": {
+      "material": "Cotton",
+      "fit": "Regular",
+      "style": "Casual",
+      "sleeve": "Full",
+      "washCare": "Machine wash"
+    }
+  },
+  {
+    "id": "19",
+    "title": "Product 19 Jeans",
+    "category": "Jeans",
+    "images": [
+      "https://via.placeholder.com/400x400?text=Product+19",
+      "https://via.placeholder.com/400x400?text=Alt+19"
+    ],
+    "price": 220,
+    "mrp": 155,
+    "isNew": false,
+    "isBestSeller": false,
+    "colors": [
+      "Black",
+      "White",
+      "Blue"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Black",
+        "stock": 11
+      },
+      {
+        "size": "S",
+        "color": "White",
+        "stock": 16
+      },
+      {
+        "size": "S",
+        "color": "Blue",
+        "stock": 17
+      },
+      {
+        "size": "M",
+        "color": "Black",
+        "stock": 0
+      },
+      {
+        "size": "M",
+        "color": "White",
+        "stock": 16
+      },
+      {
+        "size": "M",
+        "color": "Blue",
+        "stock": 13
+      },
+      {
+        "size": "L",
+        "color": "Black",
+        "stock": 7
+      },
+      {
+        "size": "L",
+        "color": "White",
+        "stock": 18
+      },
+      {
+        "size": "L",
+        "color": "Blue",
+        "stock": 2
+      },
+      {
+        "size": "XL",
+        "color": "Black",
+        "stock": 19
+      },
+      {
+        "size": "XL",
+        "color": "White",
+        "stock": 7
+      },
+      {
+        "size": "XL",
+        "color": "Blue",
+        "stock": 12
+      }
+    ],
+    "shortDescription": "A stylish women's fashion item.",
+    "details": {
+      "material": "Cotton",
+      "fit": "Regular",
+      "style": "Casual",
+      "sleeve": "Full",
+      "washCare": "Machine wash"
+    }
+  },
+  {
+    "id": "20",
+    "title": "Product 20 Kurtis",
+    "category": "Kurtis",
+    "images": [
+      "https://via.placeholder.com/400x400?text=Product+20",
+      "https://via.placeholder.com/400x400?text=Alt+20"
+    ],
+    "price": 919,
+    "mrp": 425,
+    "isNew": false,
+    "isBestSeller": true,
+    "colors": [
+      "Black",
+      "White",
+      "Blue"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Black",
+        "stock": 10
+      },
+      {
+        "size": "S",
+        "color": "White",
+        "stock": 9
+      },
+      {
+        "size": "S",
+        "color": "Blue",
+        "stock": 3
+      },
+      {
+        "size": "M",
+        "color": "Black",
+        "stock": 4
+      },
+      {
+        "size": "M",
+        "color": "White",
+        "stock": 6
+      },
+      {
+        "size": "M",
+        "color": "Blue",
+        "stock": 2
+      },
+      {
+        "size": "L",
+        "color": "Black",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "White",
+        "stock": 15
+      },
+      {
+        "size": "L",
+        "color": "Blue",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Black",
+        "stock": 4
+      },
+      {
+        "size": "XL",
+        "color": "White",
+        "stock": 6
+      },
+      {
+        "size": "XL",
+        "color": "Blue",
+        "stock": 2
+      }
+    ],
+    "shortDescription": "A stylish women's fashion item.",
+    "details": {
+      "material": "Cotton",
+      "fit": "Regular",
+      "style": "Casual",
+      "sleeve": "Full",
+      "washCare": "Machine wash"
+    }
+  }
+]
