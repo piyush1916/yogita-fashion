@@ -1,5 +1,7 @@
 .vs/
 **/.vs/
+.dotnet/
+.nuget/
 bin/
 obj/
 node_modules/
