@@ -68,6 +68,7 @@ export default function Login() {
             onChange={onChange}
             error={errors.email}
             placeholder="you@example.com"
+            autoComplete="email"
           />
 
           <Input
@@ -78,6 +79,7 @@ export default function Login() {
             onChange={onChange}
             error={errors.password}
             placeholder="••••••••"
+            autoComplete="current-password"
           />
 
           <Button disabled={loading} className="w-full">

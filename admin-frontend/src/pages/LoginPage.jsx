@@ -60,6 +60,7 @@ export default function LoginPage() {
             value={form.email}
             onChange={handleChange}
             placeholder="admin@yogitafashion.com"
+            autoComplete="email"
             required
           />
         </label>
@@ -72,6 +73,7 @@ export default function LoginPage() {
             value={form.password}
             onChange={handleChange}
             placeholder="Enter password"
+            autoComplete="current-password"
             required
           />
         </label>

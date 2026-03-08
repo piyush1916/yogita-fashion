@@ -11,6 +11,33 @@ var backendUrl = builder.Configuration["BackendUrl"] ?? "http://127.0.0.1:5037";
 var renderPortRaw = Environment.GetEnvironmentVariable("PORT");
 var renderPort = int.TryParse(renderPortRaw, out var parsedRenderPort) ? parsedRenderPort : 0;
 var webRootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
+Func<string?, string?> normalizeOrigin = rawOrigin =>
+{
+    var candidate = (rawOrigin ?? string.Empty).Trim();
+    if (string.IsNullOrWhiteSpace(candidate))
+    {
+        return null;
+    }
+
+    if (!candidate.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+        && !candidate.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+    {
+        candidate = $"https://{candidate}";
+    }
+
+    if (!Uri.TryCreate(candidate, UriKind.Absolute, out var parsedOrigin))
+    {
+        return null;
+    }
+
+    if (!string.Equals(parsedOrigin.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(parsedOrigin.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+    {
+        return null;
+    }
+
+    return parsedOrigin.GetLeftPart(UriPartial.Authority).TrimEnd('/');
+};
 var localOrigins = new[]
 {
     "http://localhost:5173",
@@ -22,11 +49,15 @@ var configuredOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").
 var envOriginsRaw = Environment.GetEnvironmentVariable("ALLOWED_ORIGINS") ?? "";
 var envOrigins = envOriginsRaw
     .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-var allowedOrigins = localOrigins
+var allowedOrigins = (builder.Environment.IsDevelopment() ? localOrigins : Array.Empty<string>())
     .Concat(configuredOrigins)
     .Concat(envOrigins)
+    .Select(normalizeOrigin)
+    .OfType<string>()
     .Distinct(StringComparer.OrdinalIgnoreCase)
     .ToArray();
+var allowAnyOriginConfigured = builder.Configuration.GetValue("Cors:AllowAnyOrigin", false);
+var allowAnyOrigin = allowAnyOriginConfigured || (!builder.Environment.IsDevelopment() && allowedOrigins.Length == 0);
 
 // Keep static files stable across local/dev/prod hosts.
 if (!Directory.Exists(webRootPath))
@@ -75,8 +106,16 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy(frontendCorsPolicy, policy =>
     {
+        if (allowAnyOrigin)
+        {
+            policy.AllowAnyOrigin();
+        }
+        else
+        {
+            policy.WithOrigins(allowedOrigins);
+        }
+
         policy
-            .WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });

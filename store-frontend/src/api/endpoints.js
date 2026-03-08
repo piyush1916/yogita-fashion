@@ -1,21 +1,21 @@
 export const API = {
 
   PRODUCTS: "/products",
-  PRODUCT_STOCK_ALERTS: "/products",
+  PRODUCT_STOCK_ALERTS: "https://yogita-fashion-api-production.up.railway.app/products",
 
-  LOGIN: "/api/Auth/login",
-  REGISTER: "/api/Auth/register",
-  AUTH_PROFILE: "/api/Auth/profile",
+  LOGIN: "https://yogita-fashion-api-production.up.railway.app/api/Auth/login",
+  REGISTER: "https://yogita-fashion-api-production.up.railway.app/api/Auth/register",
+  AUTH_PROFILE: "https://yogita-fashion-api-production.up.railway.app/api/Auth/profile",
 
-  ORDERS: "/orders",
+  ORDERS: "https://yogita-fashion-api-production.up.railway.app/orders",
 
-  ADDRESS: "/addresses",
+  ADDRESS: "https://yogita-fashion-api-production.up.railway.app/addresses",
 
-  WISHLIST: "/wishlist",
+  WISHLIST: "https://yogita-fashion-api-production.up.railway.app/wishlist",
 
-  COUPON: "/coupons/validate",
+  COUPON: "https://yogita-fashion-api-production.up.railway.app/coupons/validate",
 
-  SUPPORT: "/support/requests",
-  RETURNS: "/returns",
-  RETURNS_MY: "/returns/my"
+  SUPPORT: "https://yogita-fashion-api-production.up.railway.app/support/requests",
+  RETURNS: "https://yogita-fashion-api-production.up.railway.app/returns",
+  RETURNS_MY: "https://yogita-fashion-api-production.up.railway.app/returns/my"
 };

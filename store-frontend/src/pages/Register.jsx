@@ -71,6 +71,7 @@ export default function Register() {
             onChange={onChange}
             error={errors.name}
             placeholder="Your name"
+            autoComplete="name"
           />
 
           <Input
@@ -81,6 +82,7 @@ export default function Register() {
             onChange={onChange}
             error={errors.email}
             placeholder="you@example.com"
+            autoComplete="email"
           />
 
           <Input
@@ -91,6 +93,7 @@ export default function Register() {
             onChange={onChange}
             error={errors.password}
             placeholder="Create a password"
+            autoComplete="new-password"
           />
 
           <Button disabled={loading} className="w-full">
