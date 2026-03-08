@@ -92,12 +92,14 @@ const Header = () => {
             </div>
           </div>
 
-          <NavLink to="/" className={({ isActive }) => `yfNavLink ${isActive ? "isActive" : ""}`}>
-            Home
-          </NavLink>
-          <NavLink to="/shop" className={({ isActive }) => `yfNavLink ${isActive ? "isActive" : ""}`}>
-            Shop
-          </NavLink>
+          <div className="navLinks">
+            <NavLink to="/" className={({ isActive }) => `yfNavLink ${isActive ? "isActive" : ""}`}>
+              Home
+            </NavLink>
+            <NavLink to="/shop" className={({ isActive }) => `yfNavLink ${isActive ? "isActive" : ""}`}>
+              Shop
+            </NavLink>
+          </div>
         </div>
 
         {/* CENTER: Logo */}
@@ -192,6 +194,38 @@ const Header = () => {
           </Link>
         </div>
       </div>
+
+      <form className="yfMobileSearch" onSubmit={onSearch}>
+        <input
+          className="yfMobileSearch__input"
+          placeholder="Search products"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+        <button className="yfMobileSearch__btn" type="submit" aria-label="Search">
+          Search
+        </button>
+      </form>
+
+      <nav className="yfMobileDock" aria-label="Mobile quick navigation">
+        <NavLink to="/" className={({ isActive }) => `yfMobileDock__item ${isActive ? "isActive" : ""}`}>
+          <span>Home</span>
+        </NavLink>
+        <NavLink to="/shop" className={({ isActive }) => `yfMobileDock__item ${isActive ? "isActive" : ""}`}>
+          <span>Shop</span>
+        </NavLink>
+        <NavLink to="/wishlist" className={({ isActive }) => `yfMobileDock__item ${isActive ? "isActive" : ""}`}>
+          <span>Wishlist</span>
+          {wishlistCount > 0 ? <small className="yfMobileDock__badge">{wishlistCount}</small> : null}
+        </NavLink>
+        <NavLink to="/cart" className={({ isActive }) => `yfMobileDock__item ${isActive ? "isActive" : ""}`}>
+          <span>Cart</span>
+          {totalItems > 0 ? <small className="yfMobileDock__badge">{totalItems}</small> : null}
+        </NavLink>
+        <NavLink to={user ? "/profile" : "/login"} className={({ isActive }) => `yfMobileDock__item ${isActive ? "isActive" : ""}`}>
+          <span>{user ? "Profile" : "Login"}</span>
+        </NavLink>
+      </nav>
     </header>
   );
 };
