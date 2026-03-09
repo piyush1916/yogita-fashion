@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using YogitaFashionAPI.Data;
 
 namespace YogitaFashionAPI.Controllers
 {
@@ -8,16 +10,27 @@ namespace YogitaFashionAPI.Controllers
     [Authorize(Policy = "AdminOnly")]
     public class AnalyticsController : ControllerBase
     {
+        private readonly AppDbContext _db;
+
+        public AnalyticsController(AppDbContext db)
+        {
+            _db = db;
+        }
+
         [HttpGet("summary")]
-        public IActionResult GetSummary([FromQuery] int days = 7)
+        public async Task<IActionResult> GetSummary([FromQuery] int days = 7)
         {
             var safeDays = Math.Clamp(days, 3, 60);
             var startDate = DateTime.UtcNow.Date.AddDays(-(safeDays - 1));
-            var orders = OrdersController.OrderStore;
-            var users = AuthController.UserStore;
-            var products = ProductsController.ProductStore;
 
-            var filteredOrders = orders.Where(order => order.CreatedAt.Date >= startDate).ToList();
+            var orders = await _db.Orders.AsNoTracking().ToListAsync();
+            var usersCount = await _db.Users.CountAsync();
+            var productsCount = await _db.Products.CountAsync();
+
+            var filteredOrders = orders
+                .Where(order => order.CreatedAt.Date >= startDate)
+                .ToList();
+
             var dailySales = Enumerable.Range(0, safeDays)
                 .Select(offset =>
                 {
@@ -33,23 +46,45 @@ namespace YogitaFashionAPI.Controllers
                 })
                 .ToList();
 
-            var topProducts = filteredOrders
+            var groupedTopProducts = filteredOrders
                 .SelectMany(order => order.Items)
                 .GroupBy(item => item.ProductId)
-                .Select(group =>
+                .Select(group => new
                 {
-                    var qty = group.Sum(item => Math.Max(1, item.Qty));
-                    var revenue = group.Sum(item => item.Price * Math.Max(1, item.Qty));
-                    var productId = group.Key;
-                    var productName = products.FirstOrDefault(item => item.Id.ToString() == productId)?.Name
-                        ?? group.FirstOrDefault()?.Title
-                        ?? "Unknown Product";
+                    ProductId = group.Key,
+                    Qty = group.Sum(item => Math.Max(1, item.Qty)),
+                    Revenue = group.Sum(item => item.Price * Math.Max(1, item.Qty)),
+                    FallbackTitle = group.FirstOrDefault()?.Title ?? "Unknown Product"
+                })
+                .ToList();
+
+            var topProductIds = groupedTopProducts
+                .Select(item => item.ProductId)
+                .Where(item => int.TryParse(item, out _))
+                .Select(item => int.Parse(item))
+                .Distinct()
+                .ToList();
+
+            var productNames = topProductIds.Count == 0
+                ? new Dictionary<int, string>()
+                : await _db.Products
+                    .Where(item => topProductIds.Contains(item.Id))
+                    .ToDictionaryAsync(item => item.Id, item => item.Name);
+
+            var topProducts = groupedTopProducts
+                .Select(item =>
+                {
+                    var hasNumericId = int.TryParse(item.ProductId, out var numericId);
+                    var productName = hasNumericId && productNames.TryGetValue(numericId, out var knownName)
+                        ? knownName
+                        : item.FallbackTitle;
+
                     return new
                     {
-                        productId,
+                        productId = item.ProductId,
                         productName,
-                        qty,
-                        revenue
+                        qty = item.Qty,
+                        revenue = item.Revenue
                     };
                 })
                 .OrderByDescending(item => item.qty)
@@ -90,8 +125,8 @@ namespace YogitaFashionAPI.Controllers
                 days = safeDays,
                 totalRevenue = orders.Sum(order => order.Total),
                 totalOrders = orders.Count,
-                totalUsers = users.Count,
-                totalProducts = products.Count,
+                totalUsers = usersCount,
+                totalProducts = productsCount,
                 repeatCustomerCount = repeatCustomers.Count,
                 dailySales,
                 topProducts,

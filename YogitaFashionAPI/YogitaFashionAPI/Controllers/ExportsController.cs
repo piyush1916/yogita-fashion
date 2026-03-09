@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using YogitaFashionAPI.Data;
 using YogitaFashionAPI.Services;
 
 namespace YogitaFashionAPI.Controllers
@@ -9,10 +11,21 @@ namespace YogitaFashionAPI.Controllers
     [Authorize(Policy = "AdminOnly")]
     public class ExportsController : ControllerBase
     {
-        [HttpGet("orders.csv")]
-        public IActionResult ExportOrders()
+        private readonly AppDbContext _db;
+
+        public ExportsController(AppDbContext db)
         {
-            var orders = OrdersController.OrderStore.OrderByDescending(item => item.CreatedAt).ToList();
+            _db = db;
+        }
+
+        [HttpGet("orders.csv")]
+        public async Task<IActionResult> ExportOrders()
+        {
+            var orders = await _db.Orders
+                .AsNoTracking()
+                .OrderByDescending(item => item.CreatedAt)
+                .ToListAsync();
+
             var rows = orders.Select(order => new[]
             {
                 order.Id.ToString(),
@@ -36,9 +49,13 @@ namespace YogitaFashionAPI.Controllers
         }
 
         [HttpGet("users.csv")]
-        public IActionResult ExportUsers()
+        public async Task<IActionResult> ExportUsers()
         {
-            var users = AuthController.UserStore.OrderByDescending(item => item.CreatedAt).ToList();
+            var users = await _db.Users
+                .AsNoTracking()
+                .OrderByDescending(item => item.CreatedAt)
+                .ToListAsync();
+
             var rows = users.Select(user => new[]
             {
                 user.Id.ToString(),
@@ -58,9 +75,13 @@ namespace YogitaFashionAPI.Controllers
         }
 
         [HttpGet("products.csv")]
-        public IActionResult ExportProducts()
+        public async Task<IActionResult> ExportProducts()
         {
-            var products = ProductsController.ProductStore.OrderByDescending(item => item.Id).ToList();
+            var products = await _db.Products
+                .AsNoTracking()
+                .OrderByDescending(item => item.Id)
+                .ToListAsync();
+
             var rows = products.Select(product => new[]
             {
                 product.Id.ToString(),
@@ -81,23 +102,26 @@ namespace YogitaFashionAPI.Controllers
         }
 
         [HttpGet("returns.csv")]
-        public IActionResult ExportReturns()
+        public async Task<IActionResult> ExportReturns()
         {
-            var rows = ReturnsController.ReturnStore
+            var requests = await _db.ReturnRequests
+                .AsNoTracking()
                 .OrderByDescending(item => item.CreatedAt)
-                .Select(item => new[]
-                {
-                    item.Id.ToString(),
-                    item.OrderId.ToString(),
-                    item.UserId.ToString(),
-                    item.ItemProductId,
-                    item.ItemTitle,
-                    item.Quantity.ToString(),
-                    item.RefundAmount.ToString("0.##"),
-                    item.Status,
-                    item.Reason,
-                    item.CreatedAt.ToString("u")
-                });
+                .ToListAsync();
+
+            var rows = requests.Select(item => new[]
+            {
+                item.Id.ToString(),
+                item.OrderId.ToString(),
+                item.UserId.ToString(),
+                item.ItemProductId,
+                item.ItemTitle,
+                item.Quantity.ToString(),
+                item.RefundAmount.ToString("0.##"),
+                item.Status,
+                item.Reason,
+                item.CreatedAt.ToString("u")
+            });
 
             var bytes = CsvExportService.BuildCsv(
                 new[] { "ReturnId", "OrderId", "UserId", "ProductId", "ItemTitle", "Quantity", "RefundAmount", "Status", "Reason", "CreatedAtUtc" },

@@ -1,6 +1,8 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using YogitaFashionAPI.Data;
 using YogitaFashionAPI.Models;
 using YogitaFashionAPI.Services;
 
@@ -10,51 +12,26 @@ namespace YogitaFashionAPI.Controllers
     [ApiController]
     public class CouponsController : ControllerBase
     {
-        public static List<Coupon> CouponStore => coupons;
-        public static List<CouponUsageRecord> CouponUsageStore => usageRecords;
+        private readonly AppDbContext _db;
 
-        private static readonly List<Coupon> coupons = new()
+        public CouponsController(AppDbContext db)
         {
-            new Coupon
-            {
-                Id = 1,
-                Code = "SAVE10",
-                Type = "percent",
-                Value = 10,
-                MinOrderAmount = 499,
-                MaxUses = 1000,
-                MaxUsesPerUser = 2,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
-            },
-            new Coupon
-            {
-                Id = 2,
-                Code = "FASHION200",
-                Type = "fixed",
-                Value = 200,
-                MinOrderAmount = 1499,
-                MaxUses = 500,
-                MaxUsesPerUser = 1,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
-            }
-        };
-
-        private static readonly List<CouponUsageRecord> usageRecords = new();
+            _db = db;
+        }
 
         [HttpGet]
         [Authorize(Policy = "AdminOnly")]
-        public IActionResult GetCoupons()
+        public async Task<IActionResult> GetCoupons()
         {
-            return Ok(coupons.OrderByDescending(item => item.UpdatedAt).ToList());
+            var items = await _db.Coupons
+                .OrderByDescending(item => item.UpdatedAt)
+                .ToListAsync();
+            return Ok(items);
         }
 
         [HttpPost]
         [Authorize(Policy = "AdminOnly")]
-        public IActionResult CreateCoupon([FromBody] Coupon input)
+        public async Task<IActionResult> CreateCoupon([FromBody] Coupon input)
         {
             if (input == null)
             {
@@ -72,15 +49,19 @@ namespace YogitaFashionAPI.Controllers
                 return BadRequest(new { message = "End date must be greater than start date." });
             }
 
-            if (coupons.Any(item => string.Equals(item.Code, normalized.Code, StringComparison.OrdinalIgnoreCase)))
+            var duplicate = await _db.Coupons.AnyAsync(item =>
+                string.Equals(item.Code, normalized.Code, StringComparison.OrdinalIgnoreCase));
+            if (duplicate)
             {
                 return Conflict(new { message = "Coupon code already exists." });
             }
 
-            normalized.Id = coupons.Count == 0 ? 1 : coupons.Max(item => item.Id) + 1;
-            normalized.CreatedAt = DateTime.UtcNow;
-            normalized.UpdatedAt = DateTime.UtcNow;
-            coupons.Add(normalized);
+            var now = DateTime.UtcNow;
+            normalized.CreatedAt = now;
+            normalized.UpdatedAt = now;
+
+            _db.Coupons.Add(normalized);
+            await _db.SaveChangesAsync();
 
             AuditLogStore.Add(User, "Create", "Coupon", normalized.Id.ToString(), $"Created coupon {normalized.Code}.");
             return Ok(normalized);
@@ -88,14 +69,14 @@ namespace YogitaFashionAPI.Controllers
 
         [HttpPut("{id:int}")]
         [Authorize(Policy = "AdminOnly")]
-        public IActionResult UpdateCoupon(int id, [FromBody] Coupon input)
+        public async Task<IActionResult> UpdateCoupon(int id, [FromBody] Coupon input)
         {
             if (input == null)
             {
                 return BadRequest(new { message = "Coupon payload is required." });
             }
 
-            var existing = coupons.FirstOrDefault(item => item.Id == id);
+            var existing = await _db.Coupons.FirstOrDefaultAsync(item => item.Id == id);
             if (existing == null)
             {
                 return NotFound(new { message = "Coupon not found." });
@@ -112,7 +93,7 @@ namespace YogitaFashionAPI.Controllers
                 return BadRequest(new { message = "End date must be greater than start date." });
             }
 
-            var duplicate = coupons.FirstOrDefault(item =>
+            var duplicate = await _db.Coupons.FirstOrDefaultAsync(item =>
                 item.Id != id && string.Equals(item.Code, normalized.Code, StringComparison.OrdinalIgnoreCase));
             if (duplicate != null)
             {
@@ -130,29 +111,41 @@ namespace YogitaFashionAPI.Controllers
             existing.EndAt = normalized.EndAt;
             existing.UpdatedAt = DateTime.UtcNow;
 
+            await _db.SaveChangesAsync();
+
             AuditLogStore.Add(User, "Update", "Coupon", existing.Id.ToString(), $"Updated coupon {existing.Code}.");
             return Ok(existing);
         }
 
         [HttpDelete("{id:int}")]
         [Authorize(Policy = "AdminOnly")]
-        public IActionResult DeleteCoupon(int id)
+        public async Task<IActionResult> DeleteCoupon(int id)
         {
-            var existing = coupons.FirstOrDefault(item => item.Id == id);
+            var existing = await _db.Coupons.FirstOrDefaultAsync(item => item.Id == id);
             if (existing == null)
             {
                 return NotFound(new { message = "Coupon not found." });
             }
 
-            coupons.Remove(existing);
-            usageRecords.RemoveAll(item => item.CouponId == id);
+            var usage = await _db.CouponUsageRecords
+                .Where(item => item.CouponId == id)
+                .ToListAsync();
+
+            if (usage.Count > 0)
+            {
+                _db.CouponUsageRecords.RemoveRange(usage);
+            }
+
+            _db.Coupons.Remove(existing);
+            await _db.SaveChangesAsync();
+
             AuditLogStore.Add(User, "Delete", "Coupon", existing.Id.ToString(), $"Deleted coupon {existing.Code}.");
             return NoContent();
         }
 
         [HttpPost("validate")]
         [AllowAnonymous]
-        public IActionResult ValidateCoupon([FromBody] JsonElement payload)
+        public async Task<IActionResult> ValidateCoupon([FromBody] JsonElement payload)
         {
             var request = ParseValidationRequest(payload);
             if (string.IsNullOrWhiteSpace(request.Code))
@@ -162,7 +155,8 @@ namespace YogitaFashionAPI.Controllers
 
             var code = request.Code.Trim().ToUpperInvariant();
             var subtotal = Math.Max(0, request.Subtotal);
-            var coupon = coupons.FirstOrDefault(item => string.Equals(item.Code, code, StringComparison.OrdinalIgnoreCase));
+            var coupon = await _db.Coupons.FirstOrDefaultAsync(item =>
+                string.Equals(item.Code, code, StringComparison.OrdinalIgnoreCase));
             if (coupon == null)
             {
                 return NotFound("Invalid coupon");
@@ -220,9 +214,12 @@ namespace YogitaFashionAPI.Controllers
             }
 
             var userId = Math.Max(0, request.UserId);
+            CouponUsageRecord? usage = null;
             if (userId > 0 && coupon.MaxUsesPerUser > 0)
             {
-                var usage = usageRecords.FirstOrDefault(item => item.CouponId == coupon.Id && item.UserId == userId);
+                usage = await _db.CouponUsageRecords.FirstOrDefaultAsync(item =>
+                    item.CouponId == coupon.Id && item.UserId == userId);
+
                 if (usage != null && usage.Count >= coupon.MaxUsesPerUser)
                 {
                     return BadRequest(new CouponValidationResult
@@ -239,14 +236,13 @@ namespace YogitaFashionAPI.Controllers
             var finalTotal = Math.Max(0, subtotal - discountAmount);
 
             coupon.UsedCount += 1;
-            coupon.UpdatedAt = DateTime.UtcNow;
+            coupon.UpdatedAt = now;
 
             if (userId > 0)
             {
-                var usage = usageRecords.FirstOrDefault(item => item.CouponId == coupon.Id && item.UserId == userId);
                 if (usage == null)
                 {
-                    usageRecords.Add(new CouponUsageRecord
+                    _db.CouponUsageRecords.Add(new CouponUsageRecord
                     {
                         CouponId = coupon.Id,
                         UserId = userId,
@@ -258,6 +254,8 @@ namespace YogitaFashionAPI.Controllers
                     usage.Count += 1;
                 }
             }
+
+            await _db.SaveChangesAsync();
 
             return Ok(new CouponValidationResult
             {

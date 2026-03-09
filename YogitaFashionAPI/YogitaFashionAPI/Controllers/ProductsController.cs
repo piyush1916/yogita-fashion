@@ -1,8 +1,10 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Net.Mail;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using YogitaFashionAPI.Data;
 using YogitaFashionAPI.Models;
 using YogitaFashionAPI.Services;
 
@@ -12,45 +14,47 @@ namespace YogitaFashionAPI.Controllers
     [Route("products")]
     public class ProductsController : ControllerBase
     {
-        public static List<Product> ProductStore => Products;
-
-        private static readonly List<Product> Products = new();
-        private static readonly List<StockAlertSubscription> StockAlertSubscriptions = new();
-
         private readonly IConfiguration _configuration;
         private readonly ILogger<ProductsController> _logger;
         private readonly IWebHostEnvironment _environment;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly AppDbContext _db;
 
         public ProductsController(
             IConfiguration configuration,
             ILogger<ProductsController> logger,
             IWebHostEnvironment environment,
-            IHttpClientFactory httpClientFactory)
+            IHttpClientFactory httpClientFactory,
+            AppDbContext db)
         {
             _configuration = configuration;
             _logger = logger;
             _environment = environment;
             _httpClientFactory = httpClientFactory;
+            _db = db;
         }
 
         [HttpGet]
         [AllowAnonymous]
-        public IActionResult GetProducts()
+        public async Task<IActionResult> GetProducts()
         {
             var threshold = GetLowStockThreshold();
-            var result = Products
+            var products = await _db.Products
                 .OrderByDescending(product => product.Id)
+                .ToListAsync();
+
+            var result = products
                 .Select(product => ToProductResponse(product, threshold))
                 .ToList();
+
             return Ok(result);
         }
 
         [HttpGet("{id:int}")]
         [AllowAnonymous]
-        public IActionResult GetProductById(int id)
+        public async Task<IActionResult> GetProductById(int id)
         {
-            var product = Products.FirstOrDefault(item => item.Id == id);
+            var product = await _db.Products.FirstOrDefaultAsync(item => item.Id == id);
             if (product == null)
             {
                 return NotFound(new { message = "Product not found." });
@@ -61,15 +65,15 @@ namespace YogitaFashionAPI.Controllers
 
         [HttpGet("low-stock")]
         [Authorize(Policy = "AdminOnly")]
-        public IActionResult GetLowStockProducts()
+        public async Task<IActionResult> GetLowStockProducts()
         {
             var threshold = GetLowStockThreshold();
-            var items = Products
+            var items = await _db.Products
                 .Where(product => product.Stock <= threshold)
                 .OrderBy(product => product.Stock)
-                .Select(product => ToProductResponse(product, threshold))
-                .ToList();
-            return Ok(items);
+                .ToListAsync();
+
+            return Ok(items.Select(product => ToProductResponse(product, threshold)).ToList());
         }
 
         [HttpPost]
@@ -82,8 +86,8 @@ namespace YogitaFashionAPI.Controllers
             }
 
             var product = Normalize(input);
-            product.Id = Products.Count == 0 ? 1 : Products.Max(item => item.Id) + 1;
-            Products.Add(product);
+            _db.Products.Add(product);
+            await _db.SaveChangesAsync();
 
             await EnsureLowStockAlert(product);
             AuditLogStore.Add(User, "Create", "Product", product.Id.ToString(), $"Created product '{product.Name}'.");
@@ -95,7 +99,7 @@ namespace YogitaFashionAPI.Controllers
         [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> UpdateProduct(int id, [FromBody] Product input)
         {
-            var existing = Products.FirstOrDefault(item => item.Id == id);
+            var existing = await _db.Products.FirstOrDefaultAsync(item => item.Id == id);
             if (existing == null)
             {
                 return NotFound(new { message = "Product not found." });
@@ -127,6 +131,8 @@ namespace YogitaFashionAPI.Controllers
             existing.FeaturedProduct = normalized.FeaturedProduct;
             existing.IsBestSeller = normalized.IsBestSeller;
 
+            await _db.SaveChangesAsync();
+
             if (previousStock <= 0 && existing.Stock > 0)
             {
                 await NotifyAvailabilityForProduct(existing);
@@ -147,16 +153,18 @@ namespace YogitaFashionAPI.Controllers
 
         [HttpDelete("{id:int}")]
         [Authorize(Policy = "AdminOnly")]
-        public IActionResult DeleteProduct(int id)
+        public async Task<IActionResult> DeleteProduct(int id)
         {
-            var existing = Products.FirstOrDefault(item => item.Id == id);
+            var existing = await _db.Products.FirstOrDefaultAsync(item => item.Id == id);
             if (existing == null)
             {
                 return NotFound(new { message = "Product not found." });
             }
 
-            Products.Remove(existing);
+            _db.Products.Remove(existing);
             InventoryAlertStore.ClearLowStockAlert(existing.Id);
+            await _db.SaveChangesAsync();
+
             AuditLogStore.Add(User, "Delete", "Product", existing.Id.ToString(), $"Deleted product '{existing.Name}'.");
             return NoContent();
         }
@@ -172,10 +180,7 @@ namespace YogitaFashionAPI.Controllers
             }
 
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-            var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            {
-                ".jpg", ".jpeg", ".png", ".webp"
-            };
+            var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png", ".webp" };
 
             if (!allowedExtensions.Contains(extension))
             {
@@ -200,6 +205,7 @@ namespace YogitaFashionAPI.Controllers
                     provider = "cloudinary"
                 });
             }
+
             if (!string.IsNullOrWhiteSpace(cloudUpload.Error))
             {
                 _logger.LogWarning("Cloudinary upload skipped/fallback: {Error}", cloudUpload.Error);
@@ -238,9 +244,9 @@ namespace YogitaFashionAPI.Controllers
 
         [HttpPost("{id:int}/stock-alerts")]
         [AllowAnonymous]
-        public IActionResult SubscribeStockAlert(int id, [FromBody] CreateStockAlertRequest request)
+        public async Task<IActionResult> SubscribeStockAlert(int id, [FromBody] CreateStockAlertRequest request)
         {
-            var product = Products.FirstOrDefault(item => item.Id == id);
+            var product = await _db.Products.FirstOrDefaultAsync(item => item.Id == id);
             if (product == null)
             {
                 return NotFound(new { message = "Product not found." });
@@ -254,7 +260,7 @@ namespace YogitaFashionAPI.Controllers
                 return BadRequest("Please provide email or WhatsApp number.");
             }
 
-            var duplicate = StockAlertSubscriptions.FirstOrDefault(subscription =>
+            var duplicate = await _db.StockAlertSubscriptions.FirstOrDefaultAsync(subscription =>
                 subscription.ProductId == id &&
                 string.Equals(subscription.Email, email, StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(subscription.WhatsAppNumber, whatsAppNumber, StringComparison.Ordinal) &&
@@ -271,40 +277,46 @@ namespace YogitaFashionAPI.Controllers
 
             var next = new StockAlertSubscription
             {
-                Id = StockAlertSubscriptions.Count == 0 ? 1 : StockAlertSubscriptions.Max(item => item.Id) + 1,
                 ProductId = id,
                 Email = email,
                 WhatsAppNumber = whatsAppNumber,
                 CreatedAt = DateTime.UtcNow
             };
 
-            StockAlertSubscriptions.Add(next);
+            _db.StockAlertSubscriptions.Add(next);
+            await _db.SaveChangesAsync();
+
             return Created($"/products/{id}/stock-alerts/{next.Id}", next);
         }
 
         [HttpGet("stock-alerts")]
         [Authorize(Policy = "AdminOnly")]
-        public IActionResult GetStockAlerts([FromQuery] bool pendingOnly = false)
+        public async Task<IActionResult> GetStockAlerts([FromQuery] bool pendingOnly = false)
         {
-            var query = StockAlertSubscriptions.AsEnumerable();
+            var subscriptionsQuery = _db.StockAlertSubscriptions.AsQueryable();
             if (pendingOnly)
             {
-                query = query.Where(item => item.NotifiedAt == null);
+                subscriptionsQuery = subscriptionsQuery.Where(item => item.NotifiedAt == null);
             }
 
-            var result = query
+            var subscriptions = await subscriptionsQuery
                 .OrderByDescending(item => item.CreatedAt)
-                .Select(item => new
-                {
-                    item.Id,
-                    item.ProductId,
-                    ProductName = Products.FirstOrDefault(product => product.Id == item.ProductId)?.Name ?? "Deleted Product",
-                    item.Email,
-                    item.WhatsAppNumber,
-                    item.CreatedAt,
-                    item.NotifiedAt
-                })
-                .ToList();
+                .ToListAsync();
+
+            var productNames = await _db.Products
+                .Where(item => subscriptions.Select(sub => sub.ProductId).Contains(item.Id))
+                .ToDictionaryAsync(item => item.Id, item => item.Name);
+
+            var result = subscriptions.Select(item => new
+            {
+                item.Id,
+                item.ProductId,
+                ProductName = productNames.TryGetValue(item.ProductId, out var name) ? name : "Deleted Product",
+                item.Email,
+                item.WhatsAppNumber,
+                item.CreatedAt,
+                item.NotifiedAt
+            });
 
             return Ok(result);
         }
@@ -313,7 +325,7 @@ namespace YogitaFashionAPI.Controllers
         [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> NotifyStockAlerts(int id)
         {
-            var product = Products.FirstOrDefault(item => item.Id == id);
+            var product = await _db.Products.FirstOrDefaultAsync(item => item.Id == id);
             if (product == null)
             {
                 return NotFound(new { message = "Product not found." });
@@ -391,7 +403,7 @@ namespace YogitaFashionAPI.Controllers
                     ? "https://via.placeholder.com/300?text=Product"
                     : input.ImageUrl.Trim(),
                 FeaturedProduct = featured,
-                IsBestSeller = featured,
+                IsBestSeller = featured
             };
         }
 
@@ -460,9 +472,9 @@ namespace YogitaFashionAPI.Controllers
 
         private async Task<int> NotifyAvailabilityForProduct(Product product)
         {
-            var pending = StockAlertSubscriptions
+            var pending = await _db.StockAlertSubscriptions
                 .Where(item => item.ProductId == product.Id && item.NotifiedAt == null)
-                .ToList();
+                .ToListAsync();
 
             var sentCount = 0;
             foreach (var subscriber in pending)
@@ -475,6 +487,11 @@ namespace YogitaFashionAPI.Controllers
                     subscriber.NotifiedAt = DateTime.UtcNow;
                     sentCount++;
                 }
+            }
+
+            if (sentCount > 0)
+            {
+                await _db.SaveChangesAsync();
             }
 
             return sentCount;
@@ -518,7 +535,6 @@ namespace YogitaFashionAPI.Controllers
                 return true;
             }
 
-            // Add your WhatsApp API provider integration here (Twilio/Meta/etc).
             _logger.LogWarning("WhatsApp API provider is not configured. Could not send WhatsApp alert to {Number}.", subscriber.WhatsAppNumber);
             await Task.CompletedTask;
             return false;
@@ -576,13 +592,13 @@ namespace YogitaFashionAPI.Controllers
 
         private async Task<int> NotifySaleForProduct(Product product)
         {
-            var recipients = AuthController.UserStore
+            var recipients = await _db.Users
                 .Where(user =>
                     !string.IsNullOrWhiteSpace(user.Email) &&
                     !string.Equals(user.Role, "Admin", StringComparison.OrdinalIgnoreCase))
                 .Select(user => user.Email.Trim().ToLowerInvariant())
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
+                .Distinct()
+                .ToListAsync();
 
             var salePercent = product.OriginalPrice > 0
                 ? Math.Round(((product.OriginalPrice - product.Price) / product.OriginalPrice) * 100, 2)

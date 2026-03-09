@@ -3,6 +3,8 @@ using System.Net.Mail;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using YogitaFashionAPI.Data;
 using YogitaFashionAPI.Models;
 using YogitaFashionAPI.Services;
 
@@ -12,9 +14,6 @@ namespace YogitaFashionAPI.Controllers
     [ApiController]
     public class OrdersController : ControllerBase
     {
-        public static List<Order> OrderStore => orders;
-
-        private static readonly List<Order> orders = new();
         private static readonly HashSet<string> AllowedStatuses = new(StringComparer.OrdinalIgnoreCase)
         {
             "Pending",
@@ -43,27 +42,34 @@ namespace YogitaFashionAPI.Controllers
 
         private readonly IConfiguration _configuration;
         private readonly ILogger<OrdersController> _logger;
+        private readonly AppDbContext _db;
 
-        public OrdersController(IConfiguration configuration, ILogger<OrdersController> logger)
+        public OrdersController(
+            IConfiguration configuration,
+            ILogger<OrdersController> logger,
+            AppDbContext db)
         {
             _configuration = configuration;
             _logger = logger;
+            _db = db;
         }
 
         [HttpPost]
         [AllowAnonymous]
-        public async Task<IActionResult> CreateOrder(Order order)
+        public async Task<IActionResult> CreateOrder([FromBody] Order input)
         {
-            order.Items ??= new List<OrderItem>();
-            if (order.Items.Count == 0)
+            var normalizedItems = (input.Items ?? new List<OrderItem>())
+                .Select(NormalizeItem)
+                .ToList();
+
+            if (normalizedItems.Count == 0)
             {
                 return BadRequest("Order items are required.");
             }
 
             var stockIssues = new List<object>();
-            var productsToUpdate = new List<(Product product, int qty)>();
-
-            foreach (var item in order.Items)
+            var requestedLines = new List<(OrderItem item, int productId, int qty)>();
+            foreach (var item in normalizedItems)
             {
                 var rawProductId = (item.ProductId ?? "").Trim();
                 if (!TryResolveProductId(rawProductId, out var productId))
@@ -77,33 +83,8 @@ namespace YogitaFashionAPI.Controllers
                     continue;
                 }
 
-                var product = ProductsController.ProductStore.FirstOrDefault(p => p.Id == productId);
-                if (product == null)
-                {
-                    stockIssues.Add(new
-                    {
-                        productId,
-                        item.Title,
-                        message = "Product not found."
-                    });
-                    continue;
-                }
-
                 var qty = Math.Max(1, item.Qty);
-                if (product.Stock < qty)
-                {
-                    stockIssues.Add(new
-                    {
-                        productId,
-                        product.Name,
-                        requested = qty,
-                        available = product.Stock,
-                        message = "Out of stock."
-                    });
-                    continue;
-                }
-
-                productsToUpdate.Add((product, qty));
+                requestedLines.Add((item, productId, qty));
             }
 
             if (stockIssues.Count > 0)
@@ -115,50 +96,133 @@ namespace YogitaFashionAPI.Controllers
                 });
             }
 
-            foreach (var (product, qty) in productsToUpdate)
+            var requestedQtyByProduct = requestedLines
+                .GroupBy(line => line.productId)
+                .ToDictionary(group => group.Key, group => group.Sum(line => line.qty));
+
+            await using var transaction = await _db.Database.BeginTransactionAsync();
+
+            var productIds = requestedQtyByProduct.Keys.ToList();
+            var products = await _db.Products
+                .Where(product => productIds.Contains(product.Id))
+                .ToListAsync();
+            var productMap = products.ToDictionary(product => product.Id);
+
+            foreach (var pair in requestedQtyByProduct)
             {
-                product.Stock = Math.Max(0, product.Stock - qty);
-                await EnsureLowStockAlert(product);
+                var productId = pair.Key;
+                var requestedQty = pair.Value;
+
+                if (!productMap.TryGetValue(productId, out var product))
+                {
+                    var line = requestedLines.First(item => item.productId == productId).item;
+                    stockIssues.Add(new
+                    {
+                        productId,
+                        line.Title,
+                        message = "Product not found."
+                    });
+                    continue;
+                }
+
+                if (product.Stock < requestedQty)
+                {
+                    stockIssues.Add(new
+                    {
+                        productId,
+                        product.Name,
+                        requested = requestedQty,
+                        available = product.Stock,
+                        message = "Out of stock."
+                    });
+                }
             }
 
-            order.Id = orders.Count == 0 ? 1 : orders.Max(item => item.Id) + 1;
-            order.Status = "Pending";
-            order.OrderNumber = string.IsNullOrWhiteSpace(order.OrderNumber)
-                ? GenerateOrderNumber(order.Id)
-                : order.OrderNumber.Trim().ToUpperInvariant();
-            order.TrackingNumber = string.IsNullOrWhiteSpace(order.TrackingNumber)
-                ? $"TRK{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString()[^6..]}"
-                : order.TrackingNumber.Trim();
-            order.CreatedAt = order.CreatedAt == default ? DateTime.UtcNow : order.CreatedAt;
-            order.UpdatedAt = DateTime.UtcNow;
-            order.StatusHistory = new List<OrderStatusHistoryEntry>
+            if (stockIssues.Count > 0)
             {
-                new OrderStatusHistoryEntry
+                await transaction.RollbackAsync();
+                return BadRequest(new
                 {
-                    Status = order.Status,
-                    Notes = "Order placed",
-                    UpdatedBy = "system",
-                    UpdatedAt = DateTime.UtcNow
+                    message = "Some products are out of stock. Please update your cart.",
+                    issues = stockIssues
+                });
+            }
+
+            foreach (var pair in requestedQtyByProduct)
+            {
+                var product = productMap[pair.Key];
+                product.Stock = Math.Max(0, product.Stock - pair.Value);
+            }
+
+            var now = DateTime.UtcNow;
+            var order = new Order
+            {
+                UserId = input.UserId,
+                Name = (input.Name ?? "").Trim(),
+                Phone = (input.Phone ?? "").Trim(),
+                Email = (input.Email ?? "").Trim(),
+                Address = (input.Address ?? "").Trim(),
+                City = (input.City ?? "").Trim(),
+                Pincode = (input.Pincode ?? "").Trim(),
+                Payment = string.IsNullOrWhiteSpace(input.Payment) ? "COD" : input.Payment.Trim(),
+                Total = NormalizeTotal(input.Total, normalizedItems),
+                Items = normalizedItems,
+                Status = "Pending",
+                OrderNumber = string.IsNullOrWhiteSpace(input.OrderNumber)
+                    ? string.Empty
+                    : input.OrderNumber.Trim().ToUpperInvariant(),
+                TrackingNumber = string.IsNullOrWhiteSpace(input.TrackingNumber)
+                    ? GenerateTrackingNumber()
+                    : input.TrackingNumber.Trim(),
+                CreatedAt = input.CreatedAt == default ? now : input.CreatedAt,
+                UpdatedAt = now,
+                StatusHistory = new List<OrderStatusHistoryEntry>
+                {
+                    new OrderStatusHistoryEntry
+                    {
+                        Status = "Pending",
+                        Notes = "Order placed",
+                        UpdatedBy = "system",
+                        UpdatedAt = now
+                    }
                 }
             };
 
-            orders.Add(order);
+            _db.Orders.Add(order);
+            await _db.SaveChangesAsync();
+
+            if (string.IsNullOrWhiteSpace(order.OrderNumber))
+            {
+                order.OrderNumber = GenerateOrderNumber(order.Id);
+                await _db.SaveChangesAsync();
+            }
+
+            await transaction.CommitAsync();
+
+            foreach (var product in products)
+            {
+                await EnsureLowStockAlert(product);
+            }
+
             await NotifyAdminOnNewOrder(order);
             return Ok(order);
         }
 
         [HttpGet]
         [Authorize(Policy = "AdminOnly")]
-        public IActionResult GetAllOrders()
+        public async Task<IActionResult> GetAllOrders()
         {
-            return Ok(orders.OrderByDescending(order => order.CreatedAt).ToList());
+            var items = await _db.Orders
+                .OrderByDescending(order => order.CreatedAt)
+                .ToListAsync();
+            return Ok(items);
         }
 
         [HttpGet("me")]
         [AllowAnonymous]
-        public IActionResult GetMyOrders([FromQuery] int? userId = null)
+        public async Task<IActionResult> GetMyOrders([FromQuery] int? userId = null)
         {
-            IEnumerable<Order> query = orders;
+            IQueryable<Order> query = _db.Orders;
             if (userId.HasValue && userId.Value > 0)
             {
                 query = query.Where(order => order.UserId == userId.Value);
@@ -173,14 +237,17 @@ namespace YogitaFashionAPI.Controllers
                 query = query.Where(order => order.UserId == requesterId);
             }
 
-            return Ok(query.OrderByDescending(order => order.CreatedAt).ToList());
+            var items = await query
+                .OrderByDescending(order => order.CreatedAt)
+                .ToListAsync();
+            return Ok(items);
         }
 
         [HttpPut("{id:int}/status")]
         [Authorize(Policy = "AdminOnly")]
-        public IActionResult UpdateStatus(int id, [FromBody] UpdateOrderStatusRequest request)
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateOrderStatusRequest request)
         {
-            var order = orders.FirstOrDefault(item => item.Id == id);
+            var order = await _db.Orders.FirstOrDefaultAsync(item => item.Id == id);
             if (order == null)
             {
                 return NotFound("Order not found.");
@@ -215,38 +282,87 @@ namespace YogitaFashionAPI.Controllers
                 UpdatedAt = DateTime.UtcNow
             });
 
+            await _db.SaveChangesAsync();
+
             AuditLogStore.Add(User, "UpdateStatus", "Order", order.Id.ToString(), $"Changed status from {currentStatus} to {nextStatus}.");
             return Ok(order);
         }
 
         [HttpPost("track")]
         [AllowAnonymous]
-        public IActionResult TrackOrder([FromBody] TrackOrderRequest request)
+        public async Task<IActionResult> TrackOrder([FromBody] TrackOrderRequest request)
         {
             var rawOrderId = (request.OrderId ?? "").Trim();
-
-            var contact = (request.Contact ?? "").Trim();
-            var normalizedContact = contact.ToLowerInvariant();
-            var normalizedPhone = NormalizePhone(contact);
-
             var rawOrderIdUpper = rawOrderId.ToUpperInvariant();
-            var order = orders.FirstOrDefault(o =>
-                (
-                    string.Equals((o.OrderNumber ?? "").Trim().ToUpperInvariant(), rawOrderIdUpper, StringComparison.Ordinal) ||
-                    string.Equals(o.Id.ToString(), rawOrderId, StringComparison.Ordinal)
-                ) &&
-                (
-                    string.IsNullOrWhiteSpace(contact) ||
-                    string.Equals((o.Email ?? "").Trim().ToLowerInvariant(), normalizedContact, StringComparison.Ordinal) ||
-                    string.Equals(NormalizePhone(o.Phone), normalizedPhone, StringComparison.Ordinal)
-                ));
+
+            Order? order = null;
+            if (int.TryParse(rawOrderId, out var numericOrderId))
+            {
+                order = await _db.Orders.AsNoTracking().FirstOrDefaultAsync(item => item.Id == numericOrderId);
+            }
+
+            if (order == null && !string.IsNullOrWhiteSpace(rawOrderId))
+            {
+                order = await _db.Orders.AsNoTracking().FirstOrDefaultAsync(item =>
+                    (item.OrderNumber ?? string.Empty).ToUpper() == rawOrderIdUpper);
+            }
 
             if (order == null)
             {
                 return NotFound("Order not found");
             }
 
+            var contact = (request.Contact ?? "").Trim();
+            if (!string.IsNullOrWhiteSpace(contact))
+            {
+                var normalizedContact = contact.ToLowerInvariant();
+                var normalizedPhone = NormalizePhone(contact);
+                var emailMatches = string.Equals((order.Email ?? "").Trim().ToLowerInvariant(), normalizedContact, StringComparison.Ordinal);
+                var phoneMatches = string.Equals(NormalizePhone(order.Phone), normalizedPhone, StringComparison.Ordinal);
+
+                if (!emailMatches && !phoneMatches)
+                {
+                    return NotFound("Order not found");
+                }
+            }
+
             return Ok(order);
+        }
+
+        private static OrderItem NormalizeItem(OrderItem input)
+        {
+            var price = Math.Max(0, input.Price);
+            var mrp = input.Mrp > 0 ? input.Mrp : price;
+            var qty = Math.Max(1, input.Qty);
+            var productId = (input.ProductId ?? "").Trim();
+            var key = string.IsNullOrWhiteSpace(input.Key)
+                ? $"{(string.IsNullOrWhiteSpace(productId) ? "item" : productId)}_{Guid.NewGuid():N}"
+                : input.Key.Trim();
+
+            return new OrderItem
+            {
+                Key = key,
+                ProductId = productId,
+                Title = (input.Title ?? "").Trim(),
+                Image = (input.Image ?? "").Trim(),
+                Price = price,
+                Mrp = Math.Max(price, mrp),
+                Category = (input.Category ?? "").Trim(),
+                Size = (input.Size ?? "").Trim(),
+                Color = (input.Color ?? "").Trim(),
+                Qty = qty
+            };
+        }
+
+        private static decimal NormalizeTotal(decimal total, IEnumerable<OrderItem> items)
+        {
+            if (total > 0)
+            {
+                return Math.Round(total, 2);
+            }
+
+            var computed = items.Sum(item => Math.Max(0, item.Price) * Math.Max(1, item.Qty));
+            return Math.Round(Math.Max(0, computed), 2);
         }
 
         private int GetLowStockThreshold()
@@ -373,6 +489,13 @@ namespace YogitaFashionAPI.Controllers
             var datePart = DateTime.UtcNow.ToString("yyyyMMdd");
             var sequencePart = id.ToString("D4");
             return $"YF-{datePart}-{sequencePart}";
+        }
+
+        private static string GenerateTrackingNumber()
+        {
+            var raw = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+            var suffix = raw.Length >= 6 ? raw[^6..] : raw.PadLeft(6, '0');
+            return $"TRK{suffix}";
         }
 
         private async Task NotifyAdminOnNewOrder(Order order)

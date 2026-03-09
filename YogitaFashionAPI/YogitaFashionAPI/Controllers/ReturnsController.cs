@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using YogitaFashionAPI.Data;
 using YogitaFashionAPI.Models;
 using YogitaFashionAPI.Services;
 
@@ -10,9 +12,6 @@ namespace YogitaFashionAPI.Controllers
     [Route("returns")]
     public class ReturnsController : ControllerBase
     {
-        public static List<ReturnRequest> ReturnStore => requests;
-
-        private static readonly List<ReturnRequest> requests = new();
         private static readonly HashSet<string> AllowedStatuses = new(StringComparer.OrdinalIgnoreCase)
         {
             "Pending",
@@ -21,9 +20,16 @@ namespace YogitaFashionAPI.Controllers
             "Refunded"
         };
 
+        private readonly AppDbContext _db;
+
+        public ReturnsController(AppDbContext db)
+        {
+            _db = db;
+        }
+
         [HttpPost]
         [Authorize]
-        public IActionResult CreateReturn([FromBody] CreateReturnRequest input)
+        public async Task<IActionResult> CreateReturn([FromBody] CreateReturnRequest input)
         {
             var requesterId = GetCurrentUserId();
             var role = User.FindFirstValue(ClaimTypes.Role) ?? "";
@@ -32,7 +38,7 @@ namespace YogitaFashionAPI.Controllers
                 return Unauthorized();
             }
 
-            var order = OrdersController.OrderStore.FirstOrDefault(item => item.Id == input.OrderId);
+            var order = await _db.Orders.FirstOrDefaultAsync(item => item.Id == input.OrderId);
             if (order == null)
             {
                 return NotFound(new { message = "Order not found." });
@@ -57,7 +63,7 @@ namespace YogitaFashionAPI.Controllers
                 return BadRequest(new { message = "Product not found in this order." });
             }
 
-            var duplicate = requests.FirstOrDefault(item =>
+            var duplicate = await _db.ReturnRequests.FirstOrDefaultAsync(item =>
                 item.OrderId == order.Id &&
                 string.Equals(item.ItemProductId, productId, StringComparison.OrdinalIgnoreCase) &&
                 !string.Equals(item.Status, "Rejected", StringComparison.OrdinalIgnoreCase));
@@ -69,7 +75,6 @@ namespace YogitaFashionAPI.Controllers
             var refundAmount = Math.Round(orderItem.Price * Math.Max(1, orderItem.Qty), 2);
             var request = new ReturnRequest
             {
-                Id = requests.Count == 0 ? 1 : requests.Max(item => item.Id) + 1,
                 OrderId = order.Id,
                 UserId = order.UserId,
                 ItemProductId = orderItem.ProductId,
@@ -83,13 +88,14 @@ namespace YogitaFashionAPI.Controllers
                 UpdatedAt = DateTime.UtcNow
             };
 
-            requests.Add(request);
+            _db.ReturnRequests.Add(request);
+            await _db.SaveChangesAsync();
             return Ok(request);
         }
 
         [HttpGet("my")]
         [Authorize]
-        public IActionResult GetMyReturns()
+        public async Task<IActionResult> GetMyReturns()
         {
             var requesterId = GetCurrentUserId();
             if (!requesterId.HasValue)
@@ -97,25 +103,28 @@ namespace YogitaFashionAPI.Controllers
                 return Ok(new List<ReturnRequest>());
             }
 
-            var items = requests
+            var items = await _db.ReturnRequests
                 .Where(item => item.UserId == requesterId.Value)
                 .OrderByDescending(item => item.CreatedAt)
-                .ToList();
+                .ToListAsync();
             return Ok(items);
         }
 
         [HttpGet]
         [Authorize(Policy = "AdminOnly")]
-        public IActionResult GetAllReturns()
+        public async Task<IActionResult> GetAllReturns()
         {
-            return Ok(requests.OrderByDescending(item => item.CreatedAt).ToList());
+            var items = await _db.ReturnRequests
+                .OrderByDescending(item => item.CreatedAt)
+                .ToListAsync();
+            return Ok(items);
         }
 
         [HttpPatch("{id:int}/status")]
         [Authorize(Policy = "AdminOnly")]
-        public IActionResult UpdateStatus(int id, [FromBody] UpdateReturnStatusRequest input)
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateReturnStatusRequest input)
         {
-            var request = requests.FirstOrDefault(item => item.Id == id);
+            var request = await _db.ReturnRequests.FirstOrDefaultAsync(item => item.Id == id);
             if (request == null)
             {
                 return NotFound(new { message = "Return request not found." });
@@ -131,7 +140,7 @@ namespace YogitaFashionAPI.Controllers
             request.AdminRemark = (input.AdminRemark ?? "").Trim();
             request.UpdatedAt = DateTime.UtcNow;
 
-            var order = OrdersController.OrderStore.FirstOrDefault(item => item.Id == request.OrderId);
+            var order = await _db.Orders.FirstOrDefaultAsync(item => item.Id == request.OrderId);
             if (order != null)
             {
                 if (string.Equals(nextStatus, "Approved", StringComparison.OrdinalIgnoreCase))
@@ -146,6 +155,7 @@ namespace YogitaFashionAPI.Controllers
                 }
             }
 
+            await _db.SaveChangesAsync();
             AuditLogStore.Add(User, "UpdateStatus", "ReturnRequest", request.Id.ToString(), $"Changed return status to {nextStatus}.");
             return Ok(request);
         }

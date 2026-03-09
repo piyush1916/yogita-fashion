@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Net;
 using System.Net.Mail;
+using Microsoft.EntityFrameworkCore;
+using YogitaFashionAPI.Data;
 using YogitaFashionAPI.Models;
 
 namespace YogitaFashionAPI.Controllers
@@ -10,31 +12,34 @@ namespace YogitaFashionAPI.Controllers
     [ApiController]
     public class SupportController : ControllerBase
     {
-        private static readonly List<SupportRequest> requests = new();
-
         private readonly IConfiguration _configuration;
         private readonly ILogger<SupportController> _logger;
+        private readonly AppDbContext _db;
 
-        public SupportController(IConfiguration configuration, ILogger<SupportController> logger)
+        public SupportController(IConfiguration configuration, ILogger<SupportController> logger, AppDbContext db)
         {
             _configuration = configuration;
             _logger = logger;
+            _db = db;
         }
 
         [HttpGet("requests")]
         [Authorize(Policy = "AdminOnly")]
-        public IActionResult GetRequests()
+        public async Task<IActionResult> GetRequests()
         {
-            return Ok(requests.OrderByDescending(item => item.CreatedAt).ToList());
+            var items = await _db.SupportRequests
+                .OrderByDescending(item => item.CreatedAt)
+                .ToListAsync();
+            return Ok(items);
         }
 
         [HttpPost("requests")]
         [AllowAnonymous]
         public async Task<IActionResult> CreateRequest([FromBody] SupportRequest input)
         {
+            var now = DateTime.UtcNow;
             var request = new SupportRequest
             {
-                Id = requests.Count == 0 ? 1 : requests.Max(item => item.Id) + 1,
                 UserId = input.UserId,
                 Name = (input.Name ?? "").Trim(),
                 Contact = (input.Contact ?? "").Trim(),
@@ -44,11 +49,12 @@ namespace YogitaFashionAPI.Controllers
                 Email = (input.Email ?? "").Trim().ToLowerInvariant(),
                 Phone = (input.Phone ?? "").Trim(),
                 Status = string.IsNullOrWhiteSpace(input.Status) ? "Open" : input.Status.Trim(),
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = now,
+                UpdatedAt = now
             };
 
-            requests.Add(request);
+            _db.SupportRequests.Add(request);
+            await _db.SaveChangesAsync();
             await SendSupportRequestEmail(request);
 
             return Ok(request);

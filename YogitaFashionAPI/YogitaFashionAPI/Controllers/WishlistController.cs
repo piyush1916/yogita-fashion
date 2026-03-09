@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using YogitaFashionAPI.Data;
 using YogitaFashionAPI.Models;
 
 namespace YogitaFashionAPI.Controllers
@@ -7,33 +9,47 @@ namespace YogitaFashionAPI.Controllers
     [ApiController]
     public class WishlistController : ControllerBase
     {
-        private static List<WishlistItem> wishlist = new List<WishlistItem>();
+        private readonly AppDbContext _db;
+
+        public WishlistController(AppDbContext db)
+        {
+            _db = db;
+        }
 
         [HttpGet]
-        public IActionResult GetWishlist()
+        public async Task<IActionResult> GetWishlist()
         {
-            return Ok(wishlist);
+            var items = await _db.WishlistItems
+                .OrderByDescending(item => item.Id)
+                .ToListAsync();
+            return Ok(items);
         }
 
         [HttpPost]
-        public IActionResult AddToWishlist(WishlistItem item)
+        public async Task<IActionResult> AddToWishlist([FromBody] WishlistItem input)
         {
-            item.Id = wishlist.Count + 1;
-            wishlist.Add(item);
+            var item = new WishlistItem
+            {
+                UserId = input.UserId,
+                ProductId = input.ProductId
+            };
+
+            _db.WishlistItems.Add(item);
+            await _db.SaveChangesAsync();
             return Ok(item);
         }
 
-        [HttpDelete("{productId}")]
-        public IActionResult RemoveFromWishlist(int productId)
+        [HttpDelete("{productId:int}")]
+        public async Task<IActionResult> RemoveFromWishlist(int productId)
         {
-            var item = wishlist.FirstOrDefault(w => w.ProductId == productId);
-
+            var item = await _db.WishlistItems.FirstOrDefaultAsync(entry => entry.ProductId == productId);
             if (item == null)
             {
                 return NotFound("Wishlist item not found");
             }
 
-            wishlist.Remove(item);
+            _db.WishlistItems.Remove(item);
+            await _db.SaveChangesAsync();
             return Ok(new { message = "Removed from wishlist" });
         }
     }

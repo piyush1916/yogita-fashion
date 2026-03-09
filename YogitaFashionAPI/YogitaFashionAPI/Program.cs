@@ -1,6 +1,9 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using YogitaFashionAPI.Data;
+using YogitaFashionAPI.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 var frontendCorsPolicy = "FrontendCors";
@@ -8,6 +11,10 @@ var jwtKey = builder.Configuration["Jwt:Key"] ?? "YogitaFashion_SuperSecret_Chan
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "YogitaFashionAPI";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "YogitaFashionClients";
 var backendUrl = builder.Configuration["BackendUrl"] ?? "http://127.0.0.1:5037";
+var defaultConnection =
+    builder.Configuration.GetConnectionString("DefaultConnection") ??
+    Environment.GetEnvironmentVariable("MYSQLCONNSTR_DefaultConnection") ??
+    "server=localhost;port=3306;database=yogita_fashion_db;user=root;password=YOURPASSWORD;";
 var renderPortRaw = Environment.GetEnvironmentVariable("PORT");
 var renderPort = int.TryParse(renderPortRaw, out var parsedRenderPort) ? parsedRenderPort : 0;
 var webRootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
@@ -64,7 +71,6 @@ if (!Directory.Exists(webRootPath))
 {
     Directory.CreateDirectory(webRootPath);
 }
-builder.WebHost.UseWebRoot(webRootPath);
 
 // Render expects binding to 0.0.0.0:$PORT.
 if (renderPort > 0)
@@ -79,6 +85,8 @@ else
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHttpClient();
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseMySql(defaultConnection, new MySqlServerVersion(new Version(8, 0, 34))));
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -123,6 +131,14 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.EnsureCreatedAsync();
+    //await EnsureDatabaseCompatibilityAsync(db);
+    await SeedDefaultsAsync(db);
+}
+
 if (app.Environment.IsDevelopment())
 {
 }
@@ -140,4 +156,100 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();  
+app.Run();
+
+static async Task EnsureDatabaseCompatibilityAsync(AppDbContext db)
+{
+    var statements = new[]
+    {
+        "ALTER TABLE products ADD COLUMN IF NOT EXISTS SizesJson LONGTEXT NULL;",
+        "ALTER TABLE products ADD COLUMN IF NOT EXISTS ColorsJson LONGTEXT NULL;",
+        "UPDATE products SET SizesJson = JSON_ARRAY(TRIM(Size)) WHERE (SizesJson IS NULL OR SizesJson = '') AND Size IS NOT NULL AND TRIM(Size) <> '';",
+        "UPDATE products SET ColorsJson = JSON_ARRAY(TRIM(Color)) WHERE (ColorsJson IS NULL OR ColorsJson = '') AND Color IS NOT NULL AND TRIM(Color) <> '';",
+
+        "ALTER TABLE orders ADD COLUMN IF NOT EXISTS ItemsJson LONGTEXT NULL;",
+        "ALTER TABLE orders ADD COLUMN IF NOT EXISTS StatusHistoryJson LONGTEXT NULL;",
+        "UPDATE orders SET ItemsJson = '[]' WHERE ItemsJson IS NULL OR ItemsJson = '';",
+        "UPDATE orders SET StatusHistoryJson = '[]' WHERE StatusHistoryJson IS NULL OR StatusHistoryJson = '';",
+
+        "ALTER TABLE stockalertsubscriptions ADD COLUMN IF NOT EXISTS WhatsAppNumber VARCHAR(30) NULL;",
+
+        "ALTER TABLE coupons ADD COLUMN IF NOT EXISTS Type VARCHAR(20) NOT NULL DEFAULT 'percent';",
+        "ALTER TABLE coupons ADD COLUMN IF NOT EXISTS Value DECIMAL(10,2) NOT NULL DEFAULT 0;",
+        "ALTER TABLE coupons ADD COLUMN IF NOT EXISTS MaxUsesPerUser INT NOT NULL DEFAULT 1;",
+        "ALTER TABLE coupons ADD COLUMN IF NOT EXISTS StartAt DATETIME NULL;",
+        "UPDATE coupons SET Value = IFNULL(DiscountPercent, 0) WHERE Value = 0;",
+        "UPDATE coupons SET Type = 'percent' WHERE Type IS NULL OR TRIM(Type) = '';",
+        "UPDATE coupons SET MaxUsesPerUser = 1 WHERE MaxUsesPerUser IS NULL OR MaxUsesPerUser <= 0;",
+
+        "ALTER TABLE supportrequests ADD COLUMN IF NOT EXISTS OrderReference VARCHAR(120) NULL;",
+        "UPDATE supportrequests SET OrderReference = CAST(OrderId AS CHAR) WHERE (OrderReference IS NULL OR OrderReference = '') AND OrderId IS NOT NULL;",
+
+        "ALTER TABLE returnrequests ADD COLUMN IF NOT EXISTS ItemProductCode VARCHAR(120) NULL;",
+        "UPDATE returnrequests SET ItemProductCode = CAST(ItemProductId AS CHAR) WHERE (ItemProductCode IS NULL OR ItemProductCode = '') AND ItemProductId IS NOT NULL;",
+
+        @"CREATE TABLE IF NOT EXISTS couponusagerecords (
+            CouponId INT NOT NULL,
+            UserId INT NOT NULL,
+            Count INT NOT NULL DEFAULT 0,
+            PRIMARY KEY (CouponId, UserId)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;"
+    };
+
+    foreach (var statement in statements)
+    {
+        await db.Database.ExecuteSqlRawAsync(statement);
+    }
+}
+
+static async Task SeedDefaultsAsync(AppDbContext db)
+{
+    var now = DateTime.UtcNow;
+
+    if (!await db.Users.AnyAsync(user => user.Role == "Admin"))
+    {
+        db.Users.Add(new User
+        {
+            Name = "Admin User",
+            Email = "admin@yogitafashion.com",
+            Password = "admin123",
+            Phone = "9876543210",
+            City = "Chennai",
+            Role = "Admin",
+            CreatedAt = now
+        });
+    }
+
+    if (!await db.Coupons.AnyAsync())
+    {
+        db.Coupons.AddRange(
+            new Coupon
+            {
+                Code = "SAVE10",
+                Type = "percent",
+                Value = 10,
+                MinOrderAmount = 499,
+                MaxUses = 1000,
+                MaxUsesPerUser = 2,
+                UsedCount = 0,
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            new Coupon
+            {
+                Code = "FASHION200",
+                Type = "fixed",
+                Value = 200,
+                MinOrderAmount = 1499,
+                MaxUses = 500,
+                MaxUsesPerUser = 1,
+                UsedCount = 0,
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now
+            });
+    }
+
+    await db.SaveChangesAsync();
+}

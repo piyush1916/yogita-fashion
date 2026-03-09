@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using YogitaFashionAPI.Data;
 using YogitaFashionAPI.Models;
 using YogitaFashionAPI.Services;
 
@@ -10,73 +12,63 @@ namespace YogitaFashionAPI.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        public static List<User> UserStore => users;
-
-        private static readonly List<User> users = new()
-        {
-            new User
-            {
-                Id = 1,
-                Name = "Admin User",
-                Email = "admin@yogitafashion.com",
-                Password = "admin123",
-                Phone = "9876543210",
-                City = "Chennai",
-                Role = "Admin",
-                CreatedAt = DateTime.UtcNow
-            }
-        };
-
         private readonly IConfiguration _configuration;
+        private readonly AppDbContext _db;
 
-        public AuthController(IConfiguration configuration)
+        public AuthController(IConfiguration configuration, AppDbContext db)
         {
             _configuration = configuration;
+            _db = db;
         }
 
         [HttpGet("users")]
         [Authorize(Policy = "AdminOnly")]
-        public IActionResult GetUsers()
+        public async Task<IActionResult> GetUsers()
         {
-            var items = users
+            var items = await _db.Users
                 .OrderByDescending(user => user.CreatedAt)
-                .Select(ToPublicUser)
-                .ToList();
+                .Select(user => ToPublicUser(user))
+                .ToListAsync();
 
             return Ok(items);
         }
 
         [HttpPost("register")]
         [AllowAnonymous]
-        public IActionResult Register(User user)
+        public async Task<IActionResult> Register([FromBody] User input)
         {
-            var email = (user.Email ?? "").Trim().ToLowerInvariant();
-            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(user.Password))
+            var email = (input.Email ?? "").Trim().ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(input.Password))
             {
                 return BadRequest("Email and password are required.");
             }
 
-            if (users.Any(existing => string.Equals(existing.Email, email, StringComparison.OrdinalIgnoreCase)))
+            var alreadyExists = await _db.Users.AnyAsync(existing => string.Equals(existing.Email, email, StringComparison.OrdinalIgnoreCase));
+            if (alreadyExists)
             {
                 return Conflict("Email already registered.");
             }
 
             var requesterRole = User.FindFirstValue(ClaimTypes.Role) ?? "";
-            var requestedRole = (user.Role ?? "").Trim();
-            var role = string.Equals(requesterRole, "Admin", StringComparison.OrdinalIgnoreCase)
-                && !string.IsNullOrWhiteSpace(requestedRole)
-                    ? requestedRole
-                    : "Customer";
+            var requestedRole = (input.Role ?? "").Trim();
+            var role = string.Equals(requesterRole, "Admin", StringComparison.OrdinalIgnoreCase) &&
+                       !string.IsNullOrWhiteSpace(requestedRole)
+                ? requestedRole
+                : "Customer";
 
-            user.Id = users.Count == 0 ? 1 : users.Max(existing => existing.Id) + 1;
-            user.Email = email;
-            user.Name = (user.Name ?? "").Trim();
-            user.Phone = (user.Phone ?? "").Trim();
-            user.City = (user.City ?? "").Trim();
-            user.Role = role;
-            user.CreatedAt = user.CreatedAt == default ? DateTime.UtcNow : user.CreatedAt;
+            var user = new User
+            {
+                Name = (input.Name ?? "").Trim(),
+                Email = email,
+                Password = input.Password,
+                Phone = (input.Phone ?? "").Trim(),
+                City = (input.City ?? "").Trim(),
+                Role = role,
+                CreatedAt = input.CreatedAt == default ? DateTime.UtcNow : input.CreatedAt
+            };
 
-            users.Add(user);
+            _db.Users.Add(user);
+            await _db.SaveChangesAsync();
 
             var token = JwtTokenService.GenerateToken(user, _configuration);
             return Ok(new
@@ -88,12 +80,12 @@ namespace YogitaFashionAPI.Controllers
 
         [HttpPost("login")]
         [AllowAnonymous]
-        public IActionResult Login(User loginUser)
+        public async Task<IActionResult> Login([FromBody] User loginUser)
         {
             var email = (loginUser.Email ?? "").Trim().ToLowerInvariant();
             var password = loginUser.Password ?? "";
 
-            var user = users.FirstOrDefault(existing =>
+            var user = await _db.Users.FirstOrDefaultAsync(existing =>
                 string.Equals(existing.Email, email, StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(existing.Password, password, StringComparison.Ordinal));
 
@@ -112,7 +104,7 @@ namespace YogitaFashionAPI.Controllers
 
         [HttpGet("me")]
         [Authorize]
-        public IActionResult GetCurrentUser()
+        public async Task<IActionResult> GetCurrentUser()
         {
             var currentUserId = GetCurrentUserId();
             if (currentUserId == null)
@@ -120,7 +112,7 @@ namespace YogitaFashionAPI.Controllers
                 return Unauthorized();
             }
 
-            var user = users.FirstOrDefault(existing => existing.Id == currentUserId.Value);
+            var user = await _db.Users.FirstOrDefaultAsync(existing => existing.Id == currentUserId.Value);
             if (user == null)
             {
                 return NotFound("User not found.");
@@ -131,14 +123,14 @@ namespace YogitaFashionAPI.Controllers
 
         [HttpGet("profile/{id:int}")]
         [Authorize]
-        public IActionResult GetProfile(int id)
+        public async Task<IActionResult> GetProfile(int id)
         {
             if (!CanAccessUser(id))
             {
                 return Forbid();
             }
 
-            var user = users.FirstOrDefault(existing => existing.Id == id);
+            var user = await _db.Users.FirstOrDefaultAsync(existing => existing.Id == id);
             if (user == null)
             {
                 return NotFound();
@@ -149,14 +141,14 @@ namespace YogitaFashionAPI.Controllers
 
         [HttpPut("profile/{id:int}")]
         [Authorize]
-        public IActionResult UpdateProfile(int id, User payload)
+        public async Task<IActionResult> UpdateProfile(int id, [FromBody] User payload)
         {
             if (!CanAccessUser(id))
             {
                 return Forbid();
             }
 
-            var user = users.FirstOrDefault(existing => existing.Id == id);
+            var user = await _db.Users.FirstOrDefaultAsync(existing => existing.Id == id);
             if (user == null)
             {
                 return NotFound("User not found.");
@@ -166,7 +158,7 @@ namespace YogitaFashionAPI.Controllers
                 ? user.Email
                 : payload.Email.Trim().ToLowerInvariant();
 
-            var duplicate = users.FirstOrDefault(existing =>
+            var duplicate = await _db.Users.FirstOrDefaultAsync(existing =>
                 existing.Id != id &&
                 string.Equals(existing.Email, nextEmail, StringComparison.OrdinalIgnoreCase));
 
@@ -192,6 +184,7 @@ namespace YogitaFashionAPI.Controllers
                 user.Password = payload.Password;
             }
 
+            await _db.SaveChangesAsync();
             return Ok(ToPublicUser(user));
         }
 
