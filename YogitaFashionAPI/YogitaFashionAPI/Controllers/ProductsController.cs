@@ -14,7 +14,7 @@ namespace YogitaFashionAPI.Controllers
     [Route("products")]
     public class ProductsController : ControllerBase
     {
-        private const string DefaultFrontendBaseUrl = "https://yogita-fashion-btx2bxd32-piyush-patils-projects-765e81f9.vercel.app";
+        private const string DefaultFrontendBaseUrl = "http://127.0.0.1:5173";
         private readonly IConfiguration _configuration;
         private readonly ILogger<ProductsController> _logger;
         private readonly IWebHostEnvironment _environment;

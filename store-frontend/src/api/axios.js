@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const RAW_API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL || "https://yogita-fashion-btx2bxd32-piyush-patils-projects-765e81f9.vercel.app"
+  import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5037"
 ).trim();
 const API_BASE_URL = (
   /^https?:\/\//i.test(RAW_API_BASE_URL) ? RAW_API_BASE_URL : `https://${RAW_API_BASE_URL}`

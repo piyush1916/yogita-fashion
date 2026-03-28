@@ -7,18 +7,16 @@ using YogitaFashionAPI.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 var frontendCorsPolicy = "FrontendCors";
-var deployedBaseUrl = "https://yogita-fashion-btx2bxd32-piyush-patils-projects-765e81f9.vercel.app";
+var defaultFrontendBaseUrl = "http://127.0.0.1:5173";
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "YogitaFashion_SuperSecret_ChangeThisInProduction_2026";
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "YogitaFashionAPI";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "YogitaFashionClients";
-var backendUrl = builder.Configuration["BackendUrl"] ?? "http://0.0.0.0:5037";
-var frontendBaseUrl = builder.Configuration["Frontend:BaseUrl"] ?? deployedBaseUrl;
+var backendUrl = builder.Configuration["BackendUrl"] ?? "http://127.0.0.1:5037";
+var frontendBaseUrl = builder.Configuration["Frontend:BaseUrl"] ?? defaultFrontendBaseUrl;
 var defaultConnection =
     builder.Configuration.GetConnectionString("DefaultConnection") ??
     Environment.GetEnvironmentVariable("MYSQLCONNSTR_DefaultConnection") ??
     "server=localhost;port=3306;database=yogita_fashion_db;user=root;password=YOURPASSWORD;";
-var renderPortRaw = Environment.GetEnvironmentVariable("PORT");
-var renderPort = int.TryParse(renderPortRaw, out var parsedRenderPort) ? parsedRenderPort : 0;
 var webRootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
 Func<string?, string?> normalizeOrigin = rawOrigin =>
 {
@@ -77,15 +75,7 @@ if (!Directory.Exists(webRootPath))
     Directory.CreateDirectory(webRootPath);
 }
 
-// Render expects binding to 0.0.0.0:$PORT.
-if (renderPort > 0)
-{
-    builder.WebHost.UseUrls($"http://0.0.0.0:{renderPort}");
-}
-else
-{
-    builder.WebHost.UseUrls(backendUrl);
-}
+builder.WebHost.UseUrls(backendUrl);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

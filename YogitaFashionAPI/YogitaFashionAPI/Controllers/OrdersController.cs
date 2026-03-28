@@ -14,7 +14,7 @@ namespace YogitaFashionAPI.Controllers
     [ApiController]
     public class OrdersController : ControllerBase
     {
-        private const string DefaultFrontendBaseUrl = "https://yogita-fashion-btx2bxd32-piyush-patils-projects-765e81f9.vercel.app";
+        private const string DefaultFrontendBaseUrl = "http://127.0.0.1:5173";
         private static readonly HashSet<string> AllowedStatuses = new(StringComparer.OrdinalIgnoreCase)
         {
             "Pending",

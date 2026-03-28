@@ -13,7 +13,7 @@ npm install
 2. Create `.env` from `.env.example` and adjust API URL if needed:
 
 ```env
-VITE_API_BASE_URL=https://yogita-fashion-btx2bxd32-piyush-patils-projects-765e81f9.vercel.app
+VITE_API_BASE_URL=http://127.0.0.1:5037
 ```
 
 3. Start admin app:

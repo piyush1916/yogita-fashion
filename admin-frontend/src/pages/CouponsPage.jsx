@@ -29,7 +29,7 @@ function resolveApiErrorMessage(apiError, fallbackMessage) {
   }
 
   if (!apiError?.response) {
-    return "Backend API not reachable. Please verify your Railway backend URL in VITE_API_BASE_URL.";
+    return "Backend API not reachable. Please verify your localhost API URL in VITE_API_BASE_URL.";
   }
 
   return fallbackMessage;
