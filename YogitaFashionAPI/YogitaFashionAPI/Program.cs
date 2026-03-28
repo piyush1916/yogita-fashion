@@ -1,4 +1,9 @@
 using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using YogitaFashionAPI.Data;
+using YogitaFashionAPI.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 var frontendCorsPolicy = "FrontendCors";
@@ -42,10 +47,16 @@ Func<string?, string?> normalizeOrigin = rawOrigin =>
 
     return parsedOrigin.GetLeftPart(UriPartial.Authority).TrimEnd('/');
 };
-var defaultOrigins = new[]
+var localOrigins = new[]
 {
-    frontendBaseUrl
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174"
 };
+var defaultOrigins = (builder.Environment.IsDevelopment() ? localOrigins : Array.Empty<string>())
+    .Concat(new[] { frontendBaseUrl })
+    .ToArray();
 var configuredOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
 var envOriginsRaw = Environment.GetEnvironmentVariable("ALLOWED_ORIGINS") ?? "";
 var envOrigins = envOriginsRaw
@@ -246,8 +257,4 @@ static async Task SeedDefaultsAsync(AppDbContext db)
     }
 
     await db.SaveChangesAsync();
-}
-
-internal class WebApplication
-{
 }
