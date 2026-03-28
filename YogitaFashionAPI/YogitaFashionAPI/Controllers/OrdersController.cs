@@ -14,6 +14,7 @@ namespace YogitaFashionAPI.Controllers
     [ApiController]
     public class OrdersController : ControllerBase
     {
+        private const string DefaultFrontendBaseUrl = "https://yogita-fashion-btx2bxd32-piyush-patils-projects-765e81f9.vercel.app";
         private static readonly HashSet<string> AllowedStatuses = new(StringComparer.OrdinalIgnoreCase)
         {
             "Pending",
@@ -390,7 +391,7 @@ namespace YogitaFashionAPI.Controllers
                         $"Product: {product.Name}\n" +
                         $"Stock left: {product.Stock}\n" +
                         $"Threshold: {threshold}\n" +
-                        $"Admin panel: http://127.0.0.1:5174/products/{product.Id}/edit";
+                        $"Admin panel: {GetAdminPanelBaseUrl()}/products/{product.Id}/edit";
                     await TrySendEmail(recipient, subject, body);
                 }
 
@@ -527,7 +528,7 @@ namespace YogitaFashionAPI.Controllers
                 $"Payment: {order.Payment}\n" +
                 $"Items: {itemsSummary}\n" +
                 $"Placed At (UTC): {order.CreatedAt:u}\n\n" +
-                $"Admin Panel: http://127.0.0.1:5174/orders";
+                $"Admin Panel: {GetAdminPanelBaseUrl()}/orders";
 
             var sent = await TrySendEmail(receiverEmail, subject, body);
             if (sent)
@@ -538,6 +539,31 @@ namespace YogitaFashionAPI.Controllers
             {
                 _logger.LogWarning("New order alert could not be sent for order {OrderNumber}.", order.OrderNumber);
             }
+        }
+
+        private string GetAdminPanelBaseUrl()
+        {
+            return NormalizeBaseUrl(
+                _configuration["Frontend:AdminBaseUrl"] ??
+                _configuration["Frontend:BaseUrl"] ??
+                DefaultFrontendBaseUrl);
+        }
+
+        private static string NormalizeBaseUrl(string rawUrl)
+        {
+            var candidate = (rawUrl ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(candidate))
+            {
+                candidate = DefaultFrontendBaseUrl;
+            }
+
+            if (!candidate.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+                && !candidate.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                candidate = $"https://{candidate}";
+            }
+
+            return candidate.TrimEnd('/');
         }
     }
 }

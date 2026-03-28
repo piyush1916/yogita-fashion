@@ -14,6 +14,7 @@ namespace YogitaFashionAPI.Controllers
     [Route("products")]
     public class ProductsController : ControllerBase
     {
+        private const string DefaultFrontendBaseUrl = "https://yogita-fashion-btx2bxd32-piyush-patils-projects-765e81f9.vercel.app";
         private readonly IConfiguration _configuration;
         private readonly ILogger<ProductsController> _logger;
         private readonly IWebHostEnvironment _environment;
@@ -458,7 +459,7 @@ namespace YogitaFashionAPI.Controllers
                         $"Product: {product.Name}\n" +
                         $"Stock left: {product.Stock}\n" +
                         $"Threshold: {threshold}\n" +
-                        $"Admin panel: http://127.0.0.1:5174/products/{product.Id}/edit";
+                        $"Admin panel: {GetAdminPanelBaseUrl()}/products/{product.Id}/edit";
                     await TrySendEmail(recipient, subject, body);
                 }
 
@@ -507,7 +508,7 @@ namespace YogitaFashionAPI.Controllers
             var subject = $"Back in stock: {product.Name}";
             var body =
                 $"Hello,\n\nGreat news. {product.Name} is available again in Yogita Fashion.\n" +
-                $"Product link: http://127.0.0.1:5173/product/{product.Id}\n\n" +
+                $"Product link: {GetStoreFrontBaseUrl()}/product/{product.Id}\n\n" +
                 "You can place your order now.\n\nThank you.";
 
             return await TrySendEmail(subscriber.Email, subject, body);
@@ -525,10 +526,11 @@ namespace YogitaFashionAPI.Controllers
             if (simulate)
             {
                 _logger.LogInformation(
-                    "SIMULATED WHATSAPP from {SenderNumber} to {Number}: {Product} is back in stock. Link: http://127.0.0.1:5173/product/{ProductId}",
+                    "SIMULATED WHATSAPP from {SenderNumber} to {Number}: {Product} is back in stock. Link: {StoreBaseUrl}/product/{ProductId}",
                     senderNumber,
                     subscriber.WhatsAppNumber,
                     product.Name,
+                    GetStoreFrontBaseUrl(),
                     product.Id
                 );
                 await Task.CompletedTask;
@@ -612,7 +614,7 @@ namespace YogitaFashionAPI.Controllers
                     $"Hello,\n\nGreat news. {product.Name} is now on sale.\n" +
                     $"Discount: {salePercent}% off\n" +
                     $"Now: Rs {product.Price} (MRP Rs {product.OriginalPrice})\n" +
-                    $"Buy now: http://127.0.0.1:5173/product/{product.Id}\n\n" +
+                    $"Buy now: {GetStoreFrontBaseUrl()}/product/{product.Id}\n\n" +
                     "Thank you.";
 
                 if (await TrySendEmail(recipient, subject, body))
@@ -675,6 +677,39 @@ namespace YogitaFashionAPI.Controllers
                 _logger.LogError(exception, "Failed to send email to {Receiver}.", recipientEmail);
                 return false;
             }
+        }
+
+        private string GetStoreFrontBaseUrl()
+        {
+            return NormalizeBaseUrl(
+                _configuration["Frontend:StoreBaseUrl"] ??
+                _configuration["Frontend:BaseUrl"] ??
+                DefaultFrontendBaseUrl);
+        }
+
+        private string GetAdminPanelBaseUrl()
+        {
+            return NormalizeBaseUrl(
+                _configuration["Frontend:AdminBaseUrl"] ??
+                _configuration["Frontend:BaseUrl"] ??
+                DefaultFrontendBaseUrl);
+        }
+
+        private static string NormalizeBaseUrl(string rawUrl)
+        {
+            var candidate = (rawUrl ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(candidate))
+            {
+                candidate = DefaultFrontendBaseUrl;
+            }
+
+            if (!candidate.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+                && !candidate.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                candidate = $"https://{candidate}";
+            }
+
+            return candidate.TrimEnd('/');
         }
     }
 }

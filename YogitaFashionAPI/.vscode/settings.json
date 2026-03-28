@@ -1,0 +1,17 @@
+{
+  "dotnet.defaultSolution": "YogitaFashionAPI.sln",
+  "dotnet.dotnetPath": "C:\\Users\\Admin\\.dotnet\\dotnet.exe",
+  "omnisharp.dotNetCliPaths": [
+    "C:\\Users\\Admin\\.dotnet\\dotnet.exe"
+  ],
+  "dotnetAcquisitionExtension.existingDotnetPath": [
+    {
+      "extensionId": "ms-dotnettools.csharp",
+      "path": "C:\\Users\\Admin\\.dotnet\\dotnet.exe"
+    },
+    {
+      "extensionId": "ms-dotnettools.csdevkit",
+      "path": "C:\\Users\\Admin\\.dotnet\\dotnet.exe"
+    }
+  ]
+}

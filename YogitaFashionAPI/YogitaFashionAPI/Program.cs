@@ -1,16 +1,13 @@
 using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using YogitaFashionAPI.Data;
-using YogitaFashionAPI.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 var frontendCorsPolicy = "FrontendCors";
+var deployedBaseUrl = "https://yogita-fashion-btx2bxd32-piyush-patils-projects-765e81f9.vercel.app";
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "YogitaFashion_SuperSecret_ChangeThisInProduction_2026";
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "YogitaFashionAPI";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "YogitaFashionClients";
-var backendUrl = builder.Configuration["BackendUrl"] ?? "http://127.0.0.1:5037";
+var backendUrl = builder.Configuration["BackendUrl"] ?? "http://0.0.0.0:5037";
+var frontendBaseUrl = builder.Configuration["Frontend:BaseUrl"] ?? deployedBaseUrl;
 var defaultConnection =
     builder.Configuration.GetConnectionString("DefaultConnection") ??
     Environment.GetEnvironmentVariable("MYSQLCONNSTR_DefaultConnection") ??
@@ -45,18 +42,15 @@ Func<string?, string?> normalizeOrigin = rawOrigin =>
 
     return parsedOrigin.GetLeftPart(UriPartial.Authority).TrimEnd('/');
 };
-var localOrigins = new[]
+var defaultOrigins = new[]
 {
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:5174"
+    frontendBaseUrl
 };
 var configuredOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
 var envOriginsRaw = Environment.GetEnvironmentVariable("ALLOWED_ORIGINS") ?? "";
 var envOrigins = envOriginsRaw
     .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-var allowedOrigins = (builder.Environment.IsDevelopment() ? localOrigins : Array.Empty<string>())
+var allowedOrigins = defaultOrigins
     .Concat(configuredOrigins)
     .Concat(envOrigins)
     .Select(normalizeOrigin)
@@ -135,7 +129,7 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.EnsureCreatedAsync();
-    //await EnsureDatabaseCompatibilityAsync(db);
+    await EnsureDatabaseCompatibilityAsync(db);
     await SeedDefaultsAsync(db);
 }
 
@@ -252,4 +246,8 @@ static async Task SeedDefaultsAsync(AppDbContext db)
     }
 
     await db.SaveChangesAsync();
+}
+
+internal class WebApplication
+{
 }
