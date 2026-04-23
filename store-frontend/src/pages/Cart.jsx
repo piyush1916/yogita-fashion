@@ -1,39 +1,45 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useToast } from "../hooks/useToast";
-import couponsService from "../services/couponsService";
 import { formatCurrency } from "../utils/currency";
 
 const Cart = () => {
-  const { user } = useAuth();
-  const { items, updateQty, removeFromCart, subtotal } = useCart();
-  const [coupon, setCoupon] = useState("");
-  const [discount, setDiscount] = useState(0);
+  const {
+    items,
+    updateQty,
+    removeFromCart,
+    subtotal,
+    total,
+    discount,
+    coupon,
+    applyCoupon,
+    removeCoupon,
+  } = useCart();
+  const [couponInput, setCouponInput] = useState(coupon || "");
   const [applying, setApplying] = useState(false);
   const toast = useToast();
   const navigate = useNavigate();
 
-  const apply = async () => {
-    const itemCount = items.reduce((sum, item) => sum + (Number(item?.qty) || 0), 0);
+  const handleApplyCoupon = async () => {
     setApplying(true);
-    const res = await couponsService.applyCoupon(coupon, {
-      subtotal,
-      itemCount,
-      userId: Number(user?.id) || 0,
-    });
+    const result = await applyCoupon(couponInput);
     setApplying(false);
 
-    if (res.valid) {
-      setDiscount(res.discount);
-      toast.success(res.message);
-    } else {
-      toast.error(res.message);
+    if (result?.ok) {
+      toast.success(result.message || "Coupon applied.");
+      setCouponInput((couponInput || "").trim().toUpperCase());
+      return;
     }
+
+    toast.error(result?.message || "Invalid coupon.");
   };
 
-  const total = subtotal * (1 - discount);
+  const handleRemoveCoupon = () => {
+    removeCoupon();
+    setCouponInput("");
+    toast.info("Coupon removed.");
+  };
 
   return (
     <div className="container mx-auto px-4 py-10">
@@ -71,19 +77,24 @@ const Cart = () => {
           </div>
           <div className="mt-6">
             <h3 className="font-semibold">Subtotal: {formatCurrency(subtotal)}</h3>
-            <div className="mt-2 flex space-x-2 items-center">
+            <div className="mt-2 flex flex-wrap gap-2 items-center">
               <input
                 type="text"
                 placeholder="Coupon code"
-                value={coupon}
-                onChange={(e) => setCoupon(e.target.value)}
-                className="border px-2 py-1 rounded"
+                value={couponInput}
+                onChange={(e) => setCouponInput(e.target.value)}
+                className="border border-gray-300 px-2 py-1 rounded bg-white text-gray-900 placeholder-gray-500"
               />
-              <button onClick={apply} disabled={applying} className="bg-indigo-600 text-white px-4 py-1 rounded">
+              <button onClick={handleApplyCoupon} disabled={applying} className="bg-indigo-600 text-white px-4 py-1 rounded">
                 {applying ? "Applying..." : "Apply"}
               </button>
+              {coupon ? (
+                <button onClick={handleRemoveCoupon} className="border border-gray-300 px-4 py-1 rounded">
+                  Remove Coupon
+                </button>
+              ) : null}
             </div>
-            {discount > 0 && <p className="text-green-600">Discount applied: {Math.round(discount * 100)}%</p>}
+            {discount > 0 ? <p className="text-green-600">Discount applied: {formatCurrency(discount)}</p> : null}
             <p className="mt-1 font-semibold">Total after discount: {formatCurrency(total)}</p>
             <button onClick={() => navigate("/checkout")} className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded">
               Continue to Checkout

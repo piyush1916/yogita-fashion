@@ -1,32 +1,8 @@
 import axios from "../api/axios";
 import { API } from "../api/endpoints";
-import { STORAGE_KEYS, ORDER_STATUSES } from "../utils/constants";
+import { ORDER_STATUSES } from "../utils/constants";
 
-const SERVER_UNAVAILABLE_MESSAGE = "Server unavailable. Order could not be placed. Please try again.";
-
-const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 const normalizeText = (value) => String(value ?? "").trim();
-const normalizeEmail = (value) => normalizeText(value).toLowerCase();
-const normalizePhone = (value) => normalizeText(value).replace(/\D+/g, "");
-
-const safeParse = (json, fallback) => {
-  try {
-    const parsed = JSON.parse(json);
-    return parsed ?? fallback;
-  } catch {
-    return fallback;
-  }
-};
-
-const getLocalOrders = () => {
-  const json = localStorage.getItem(STORAGE_KEYS.ORDERS);
-  const orders = json ? safeParse(json, []) : [];
-  return Array.isArray(orders) ? orders : [];
-};
-
-const saveLocalOrders = (orders) => {
-  localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(Array.isArray(orders) ? orders : []));
-};
 
 const normalizeOrderItem = (item, index = 0) => {
   const productId = normalizeText(item?.productId ?? item?.id);
@@ -48,7 +24,6 @@ const normalizeApiProductId = (value) => {
   const raw = normalizeText(value);
   if (!raw) return "";
 
-  // Handle legacy cart formats like "12__M__Black" and keep server id numeric.
   const head = raw.split("__")[0].trim();
   if (/^\d+$/.test(head)) return head;
 
@@ -65,7 +40,7 @@ const normalizeOrder = (order, fallback = {}) => {
   const items = itemsSource.map(normalizeOrderItem);
   const totalFromOrder = Number(order?.total ?? order?.Total ?? order?.totalPrice ?? order?.TotalPrice);
   const computedTotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const total = Number.isFinite(totalFromOrder) && totalFromOrder > 0 ? totalFromOrder : computedTotal;
+  const total = Number.isFinite(totalFromOrder) && totalFromOrder >= 0 ? totalFromOrder : computedTotal;
 
   return {
     id: String(idValue),
@@ -78,6 +53,8 @@ const normalizeOrder = (order, fallback = {}) => {
     city: normalizeText(order?.city ?? order?.City ?? fallback?.city),
     pincode: normalizeText(order?.pincode ?? order?.Pincode ?? fallback?.pincode),
     payment: normalizeText(order?.payment ?? order?.Payment ?? fallback?.payment) || "COD",
+    couponCode: normalizeText(order?.couponCode ?? order?.CouponCode ?? fallback?.couponCode),
+    discountAmount: Number(order?.discountAmount ?? order?.DiscountAmount ?? fallback?.discountAmount) || 0,
     items,
     total,
     status: normalizeText(order?.status ?? order?.Status ?? fallback?.status) || ORDER_STATUSES[0],
@@ -100,7 +77,8 @@ const toApiOrder = (order) => {
     pincode: normalized.pincode,
     payment: normalized.payment,
     total: normalized.total,
-    status: normalized.status,
+    couponCode: normalized.couponCode,
+    discountAmount: normalized.discountAmount,
     items: normalized.items.map((item) => ({
       key: item.key,
       productId: normalizeApiProductId(item.productId),
@@ -132,80 +110,26 @@ const formatIssueSummary = (issues) => {
     .join(", ");
 };
 
-const createOrderLocal = async (order) => {
-  await delay(200);
-  const orders = getLocalOrders();
-  const id = String(Date.now());
-  const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  const next = normalizeOrder(
-    {
-      ...order,
-      id,
-      orderNumber: `YF-${datePart}-${id.slice(-4)}`,
-      status: ORDER_STATUSES[0],
-      trackingNumber: `TRK${id.slice(-6)}`,
-      createdAt: new Date().toISOString(),
-    },
-    order
-  );
-  orders.push(next);
-  saveLocalOrders(orders);
-  return next;
-};
-
-const trackOrderLocal = async ({ orderId, contact }) => {
-  await delay(100);
-  const orders = getLocalOrders().map((order) => normalizeOrder(order));
-
-  const targetOrderId = normalizeText(orderId);
-  const targetContactRaw = normalizeText(contact);
-  const targetIsEmail = targetContactRaw.includes("@");
-  const targetContact = targetIsEmail ? normalizeEmail(targetContactRaw) : normalizePhone(targetContactRaw);
-
-  const found = orders.find((order) => {
-    const matchesOrderId =
-      normalizeText(order?.id) === targetOrderId || normalizeText(order?.orderNumber).toUpperCase() === targetOrderId.toUpperCase();
-    if (!matchesOrderId) return false;
-    const orderContact = targetIsEmail ? normalizeEmail(order?.email) : normalizePhone(order?.phone);
-    return Boolean(orderContact) && orderContact === targetContact;
-  });
-
-  return found || null;
-};
-
-const listOrdersLocal = async () => {
-  await delay(100);
-  const orders = getLocalOrders().map((order) => normalizeOrder(order));
-  return [...orders].sort((a, b) => {
-    const aTime = Date.parse(a.createdAt || 0);
-    const bTime = Date.parse(b.createdAt || 0);
-    return (Number.isFinite(bTime) ? bTime : 0) - (Number.isFinite(aTime) ? aTime : 0);
-  });
-};
-
 const createOrder = async (order) => {
   const normalized = normalizeOrder(order);
   try {
     const res = await axios.post(API.ORDERS, toApiOrder(normalized));
     return normalizeOrder(res?.data, normalized);
   } catch (error) {
-    if (error?.response) {
-      const issues = Array.isArray(error.response.data?.issues) ? error.response.data.issues : [];
-      const issueSummary = formatIssueSummary(issues);
-      const message =
-        typeof error.response.data?.message === "string"
-          ? error.response.data.message
-          : typeof error.response.data === "string"
-          ? error.response.data
-          : "Failed to place order.";
+    const issues = Array.isArray(error?.response?.data?.issues) ? error.response.data.issues : [];
+    const issueSummary = formatIssueSummary(issues);
+    const message =
+      typeof error?.response?.data?.message === "string"
+        ? error.response.data.message
+        : typeof error?.response?.data === "string"
+        ? error.response.data
+        : "Failed to place order.";
 
-      const nextError = new Error(issueSummary ? `${message} ${issueSummary}` : message);
-      if (issues.length > 0) {
-        nextError.issues = issues;
-      }
-      throw nextError;
+    const nextError = new Error(issueSummary ? `${message} ${issueSummary}` : message);
+    if (issues.length > 0) {
+      nextError.issues = issues;
     }
-    throw new Error(SERVER_UNAVAILABLE_MESSAGE);
+    throw nextError;
   }
 };
 
@@ -220,17 +144,23 @@ const trackOrder = async ({ orderId, contact }) => {
     return normalizeOrder(res?.data);
   } catch (error) {
     if (error?.response?.status === 404) return null;
-    return trackOrderLocal(payload);
+    throw error;
   }
 };
 
-const listOrders = async () => {
+const listOrders = async (user = null) => {
+  const userId = Number(user?.id) || 0;
+  const role = normalizeText(user?.role).toLowerCase();
+  const requestConfig = role === "admin" && userId > 0 ? { params: { userId } } : undefined;
   try {
-    const res = await axios.get(`${API.ORDERS}/me`);
+    const res = await axios.get(`${API.ORDERS}/me`, requestConfig);
     const items = Array.isArray(res?.data) ? res.data : [];
     return items.map((order) => normalizeOrder(order));
-  } catch {
-    return listOrdersLocal();
+  } catch (error) {
+    if (error?.response?.status === 401 || error?.response?.status === 403) {
+      return [];
+    }
+    throw error;
   }
 };
 

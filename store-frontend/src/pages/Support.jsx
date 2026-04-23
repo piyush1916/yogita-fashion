@@ -58,8 +58,12 @@ export default function Support() {
 
     let ignore = false;
     const loadRequests = async () => {
-      const userRequests = await supportService.listRequestsByUser(user);
-      if (!ignore) setRequests(userRequests);
+      try {
+        const userRequests = await supportService.listRequestsByUser();
+        if (!ignore) setRequests(userRequests);
+      } catch {
+        if (!ignore) setRequests([]);
+      }
     };
     loadRequests();
 
@@ -102,8 +106,8 @@ export default function Support() {
         orderId: "",
         message: "",
       }));
-    } catch {
-      toast.error("Unable to submit support request.");
+    } catch (error) {
+      toast.error(error?.message || "Unable to submit support request.");
     }
   };
 

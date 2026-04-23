@@ -11,6 +11,7 @@ import UsersPage from "../pages/UsersPage";
 import CouponsPage from "../pages/CouponsPage";
 import ReturnsPage from "../pages/ReturnsPage";
 import AuditLogsPage from "../pages/AuditLogsPage";
+import SupportRequestsPage from "../pages/SupportRequestsPage";
 import NotFoundPage from "../pages/NotFoundPage";
 
 export default function AppRoutes() {
@@ -28,6 +29,7 @@ export default function AppRoutes() {
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/coupons" element={<CouponsPage />} />
           <Route path="/returns" element={<ReturnsPage />} />
+          <Route path="/support-requests" element={<SupportRequestsPage />} />
           <Route path="/users" element={<UsersPage />} />
           <Route path="/audit-logs" element={<AuditLogsPage />} />
         </Route>

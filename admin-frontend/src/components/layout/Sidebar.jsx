@@ -7,6 +7,7 @@ const navItems = [
   { to: "/orders", label: "Orders", icon: "OR" },
   { to: "/coupons", label: "Coupons", icon: "CP" },
   { to: "/returns", label: "Returns", icon: "RT" },
+  { to: "/support-requests", label: "Support", icon: "SP" },
   { to: "/users", label: "Users", icon: "US" },
   { to: "/audit-logs", label: "Audit Logs", icon: "LG" },
 ];

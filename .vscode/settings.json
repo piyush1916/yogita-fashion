@@ -1,5 +1,5 @@
 {
-  "dotnet.defaultSolution": "YogitaFashionWorkspace.sln",
+  "dotnet.defaultSolution": "YogitaFashionAPI/YogitaFashionAPI.sln",
   "omnisharp.dotNetCliPaths": [
     "C:\\Users\\Admin\\.dotnet\\dotnet.exe"
   ],

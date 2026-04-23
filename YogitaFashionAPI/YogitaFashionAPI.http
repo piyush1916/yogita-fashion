@@ -1,0 +1,16 @@
+@YogitaFashionAPI_HostAddress = http://localhost:5037
+
+GET {{YogitaFashionAPI_HostAddress}}/products
+Accept: application/json
+
+###
+
+POST {{YogitaFashionAPI_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@yogitafashion.com",
+  "password": "Khushi@1916"
+}
+
+###

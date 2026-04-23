@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useAuth } from "./AuthContext";
+import productsService from "../services/productsService";
 import wishlistService from "../services/wishlistService";
 
 const WishlistContext = createContext(null);
@@ -18,56 +20,121 @@ function toWishlistItem(product) {
 
   return {
     productId,
-    title: product?.title || "Untitled Product",
-    image: product?.image || product?.images?.[0] || "",
+    title: product?.title || product?.name || "Untitled Product",
+    image: product?.image || product?.images?.[0] || product?.imageUrl || "",
     price: normalizePrice(product?.price),
-    mrp: normalizePrice(product?.mrp),
+    mrp: normalizePrice(product?.mrp ?? product?.originalPrice),
     category: product?.category || "",
     addedAt: product?.addedAt || new Date().toISOString(),
   };
 }
 
-function normalizeItems(items) {
-  if (!Array.isArray(items)) return [];
-  return items
-    .map((item) => toWishlistItem(item))
+function dedupeItems(items) {
+  return items.filter(
+    (item, index, list) =>
+      Boolean(item?.productId) && list.findIndex((entry) => entry.productId === item.productId) === index
+  );
+}
+
+async function hydrateItems(rawItems) {
+  const normalized = dedupeItems(rawItems.map((item) => toWishlistItem(item)).filter(Boolean));
+  const idsNeedingData = normalized
+    .filter((item) => !item.title || item.title === "Untitled Product" || !item.image)
+    .map((item) => item.productId);
+
+  if (idsNeedingData.length === 0) return normalized;
+
+  const hydrationResults = await Promise.all(
+    idsNeedingData.map(async (productId) => {
+      try {
+        const product = await productsService.getById(productId);
+        const hydrated = toWishlistItem(product);
+        return hydrated ? { productId, hydrated } : null;
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  const hydrationMap = hydrationResults
     .filter(Boolean)
-    .filter((item, index, list) => list.findIndex((x) => x.productId === item.productId) === index);
+    .reduce((acc, entry) => {
+      acc[entry.productId] = entry.hydrated;
+      return acc;
+    }, {});
+
+  return normalized.map((item) => hydrationMap[item.productId] || item);
 }
 
 export function WishlistProvider({ children }) {
-  const [items, setItems] = useState(() => normalizeItems(wishlistService.getItems()));
+  const { user } = useAuth();
+  const [items, setItems] = useState([]);
 
   useEffect(() => {
-    wishlistService.saveItems(items);
-  }, [items]);
+    let ignore = false;
 
-  const addToWishlist = (product) => {
+    const loadWishlist = async () => {
+      try {
+        const rawItems = await wishlistService.getItems();
+        const hydrated = await hydrateItems(rawItems);
+        if (!ignore) {
+          setItems(hydrated);
+        }
+      } catch {
+        if (!ignore) {
+          setItems([]);
+        }
+      }
+    };
+
+    loadWishlist();
+    return () => {
+      ignore = true;
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) return;
+    wishlistService.saveLocalItems(items);
+  }, [items, user]);
+
+  const addToWishlist = async (product) => {
     const nextItem = toWishlistItem(product);
     if (!nextItem) return;
 
-    setItems((prev) => {
-      if (prev.some((item) => item.productId === nextItem.productId)) return prev;
-      return [nextItem, ...prev];
-    });
+    if (items.some((item) => item.productId === nextItem.productId)) {
+      return;
+    }
+
+    try {
+      await wishlistService.addItem(nextItem.productId);
+      setItems((prev) => [nextItem, ...prev.filter((item) => item.productId !== nextItem.productId)]);
+    } catch {
+      // Keep current state if wishlist sync fails.
+    }
   };
 
-  const removeFromWishlist = (productId) => {
+  const removeFromWishlist = async (productId) => {
     const normalizedProductId = normalizeProductId(productId);
     if (!normalizedProductId) return;
-    setItems((prev) => prev.filter((item) => item.productId !== normalizedProductId));
+
+    try {
+      await wishlistService.removeItem(normalizedProductId);
+      setItems((prev) => prev.filter((item) => item.productId !== normalizedProductId));
+    } catch {
+      // Keep current state if wishlist sync fails.
+    }
   };
 
-  const toggleWishlist = (product) => {
+  const toggleWishlist = async (product) => {
     const nextItem = toWishlistItem(product);
     if (!nextItem) return;
-
-    setItems((prev) => {
-      if (prev.some((item) => item.productId === nextItem.productId)) {
-        return prev.filter((item) => item.productId !== nextItem.productId);
-      }
-      return [nextItem, ...prev];
-    });
+    const exists = items.some((item) => item.productId === nextItem.productId);
+    if (exists) {
+      await removeFromWishlist(nextItem.productId);
+      return;
+    }
+    await addToWishlist(nextItem);
   };
 
   const clearWishlist = () => {

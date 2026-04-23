@@ -1,9 +1,21 @@
-.vs/
+# Build output
+**/bin/
+**/obj/
+
+# User-specific files
+*.user
+*.suo
 **/.vs/
+.vscode/
+
+# Runtime/generated files
+*.log
+*.out.log
+*.err.log
+logs/
+**/.aspnet-data-protection-keys/
+
+# Local tool caches
 .dotnet/
-.nuget/
-bin/
-obj/
-node_modules/
-dist/
-.env
+.dotnet_cli_home/
+.mysqlsh/

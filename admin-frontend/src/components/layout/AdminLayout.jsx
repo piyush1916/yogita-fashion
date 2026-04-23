@@ -11,6 +11,7 @@ function getPageTitle(pathname) {
   if (pathname.startsWith("/orders")) return "Orders";
   if (pathname.startsWith("/coupons")) return "Coupons";
   if (pathname.startsWith("/returns")) return "Returns";
+  if (pathname.startsWith("/support-requests")) return "Support Requests";
   if (pathname.startsWith("/users")) return "Users";
   if (pathname.startsWith("/audit-logs")) return "Audit Logs";
   return "Admin Panel";

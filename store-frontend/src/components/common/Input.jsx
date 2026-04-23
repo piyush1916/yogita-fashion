@@ -5,7 +5,7 @@ const Input = ({ label, error, ...props }) => (
     {label && <label className="mb-1 text-sm font-medium">{label}</label>}
     <input
       {...props}
-      className={`border rounded px-3 py-2 focus:outline-none focus:ring ${
+      className={`border rounded px-3 py-2 focus:outline-none focus:ring bg-white text-gray-900 placeholder-gray-500 ${
         error ? "border-red-500" : "border-gray-300"
       }`}
     />

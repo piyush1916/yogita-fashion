@@ -437,6 +437,12 @@ textarea {
   border-color: #f4c980;
 }
 
+.status-open {
+  background: #fff5e7;
+  color: #9a6204;
+  border-color: #f4c980;
+}
+
 .status-confirmed,
 .status-shipped,
 .status-packed,

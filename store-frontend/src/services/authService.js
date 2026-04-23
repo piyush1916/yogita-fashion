@@ -69,6 +69,8 @@ const saveToken = (token) => {
   localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, safeToken);
 };
 
+const getToken = () => String(localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN) || "").trim();
+
 const syncUser = (user, token = "") => {
   if (!user) return null;
   const users = getUsers();
@@ -77,7 +79,7 @@ const syncUser = (user, token = "") => {
   else users.push(user);
   saveUsers(users);
   saveSession(user);
-  if (token) saveToken(token);
+  saveToken(token);
   return user;
 };
 
@@ -188,6 +190,7 @@ const login = async ({ email, password }) => {
 const updateProfile = async (payload) => {
   const session = getSession();
   if (!session) throw new Error("Please login first");
+  if (!getToken()) throw new Error("Please login again.");
 
   const apiPayload = {
     name: String(payload?.name ?? session.name ?? "").trim(),
@@ -215,6 +218,17 @@ const logout = () => {
   localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
 };
 
-const profile = () => getSession();
+const profile = () => {
+  const session = getSession();
+  if (!session) return null;
+
+  if (!getToken()) {
+    // Clear stale pseudo-login state from old sessions that do not have JWT token.
+    localStorage.removeItem(STORAGE_KEYS.AUTH_SESSION);
+    return null;
+  }
+
+  return session;
+};
 
 export default { register, login, updateProfile, logout, profile };

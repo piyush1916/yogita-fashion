@@ -2,6 +2,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import ordersService from "../services/ordersService";
+import returnsService from "../services/returnsService";
 import { validateTrackOrderForm } from "../utils/validators";
 import { useToast } from "../hooks/useToast";
 import { ORDER_STATUSES } from "../utils/constants";
@@ -19,6 +20,33 @@ function formatOrderDate(value) {
   });
 }
 
+const RETURN_TRACKING_STEPS = ["Pending", "Pickup Started", "Pickup Completed", "Refunded"];
+
+const normalizeReturnStatus = (status) => String(status || "").trim().toLowerCase().replace(/[\s_-]+/g, "");
+
+const getReturnDisplayStatus = (status) => {
+  const normalized = normalizeReturnStatus(status);
+  if (!normalized) return "";
+  if (normalized === "approved" || normalized === "pickupstarted") return "Pickup Started";
+  if (normalized === "completed" || normalized === "returned" || normalized === "pickupcompleted") {
+    return "Pickup Completed";
+  }
+  if (normalized === "pending") return "Pending";
+  if (normalized === "refunded") return "Refunded";
+  if (normalized === "rejected") return "Rejected";
+  return String(status || "").trim();
+};
+
+const getReturnTrackingIndex = (status) => {
+  const normalized = normalizeReturnStatus(status);
+  if (!normalized) return -1;
+  if (normalized === "pending") return 0;
+  if (normalized === "approved" || normalized === "pickupstarted") return 1;
+  if (normalized === "completed" || normalized === "returned" || normalized === "pickupcompleted") return 2;
+  if (normalized === "refunded") return 3;
+  return -1;
+};
+
 export default function TrackOrder() {
   const loc = useLocation();
   const { user } = useAuth();
@@ -30,6 +58,7 @@ export default function TrackOrder() {
   });
   const [errors, setErrors] = useState({});
   const [order, setOrder] = useState(null);
+  const [returnRequests, setReturnRequests] = useState([]);
   const [tracking, setTracking] = useState(false);
 
   useEffect(() => {
@@ -106,8 +135,14 @@ export default function TrackOrder() {
         return;
       }
       setOrder(found);
-    } catch {
-      toast.error("Could not track order right now.");
+    } catch (error) {
+      const message =
+        typeof error?.response?.data?.message === "string"
+          ? error.response.data.message
+          : typeof error?.response?.data === "string"
+          ? error.response.data
+          : "Could not track order right now.";
+      toast.error(message);
     } finally {
       setTracking(false);
     }
@@ -141,6 +176,31 @@ export default function TrackOrder() {
 
     toast.info("Share not supported on this device.");
   };
+
+  useEffect(() => {
+    if (!order || !user) {
+      setReturnRequests([]);
+      return;
+    }
+
+    let ignore = false;
+    const loadReturns = async () => {
+      try {
+        const items = await returnsService.getMyReturnRequests();
+        if (ignore) return;
+        const orderId = String(order.id || "").trim();
+        const filtered = items.filter((item) => String(item.orderId || "").trim() === orderId);
+        setReturnRequests(filtered);
+      } catch {
+        if (!ignore) setReturnRequests([]);
+      }
+    };
+
+    loadReturns();
+    return () => {
+      ignore = true;
+    };
+  }, [order, user]);
 
   return (
     <section className="ordersPage">
@@ -236,6 +296,51 @@ export default function TrackOrder() {
                       );
                     })}
                   </div>
+
+                  {returnRequests.length > 0 ? (
+                    <div className="ordersReturnTracking">
+                      <p className="ordersReturnTrackingTitle">Return Tracking</p>
+                      {returnRequests.map((request) => {
+                        const returnStatus = getReturnDisplayStatus(request.status);
+                        const returnTrackingIndex = getReturnTrackingIndex(request.status);
+                        const isRejected = normalizeReturnStatus(request.status) === "rejected";
+
+                        return (
+                          <div key={request.id} style={{ marginTop: "10px" }}>
+                            <p className="ordersReturnTrackingMeta">
+                              Request #{request.id} | Status: {returnStatus || "Pending"}
+                            </p>
+                            <p className="ordersReturnTrackingMeta">
+                              Updated: {formatOrderDate(request.updatedAt || request.createdAt)}
+                            </p>
+
+                            {isRejected ? (
+                              <p className="ordersReturnTrackingRejected">
+                                Request rejected. Please contact support for help with this order.
+                              </p>
+                            ) : (
+                              <div className="ordersReturnTimeline">
+                                {RETURN_TRACKING_STEPS.map((step, index) => {
+                                  const isDone = returnTrackingIndex >= index;
+                                  const isCurrent = returnTrackingIndex === index;
+                                  return (
+                                    <span
+                                      key={`${request.id}_${step}`}
+                                      className={`ordersReturnStep ${isDone ? "isDone" : ""} ${
+                                        isCurrent ? "isCurrent" : ""
+                                      }`}
+                                    >
+                                      {step}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : null}
 
                   <div className="profileActions mt-4">
                     <button type="button" className="profileBtn profileBtnGhost" onClick={onShare}>

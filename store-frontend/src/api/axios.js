@@ -4,7 +4,7 @@ const RAW_API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5037"
 ).trim();
 const API_BASE_URL = (
-  /^https?:\/\//i.test(RAW_API_BASE_URL) ? RAW_API_BASE_URL : `https://${RAW_API_BASE_URL}`
+  /^https?:\/\//i.test(RAW_API_BASE_URL) ? RAW_API_BASE_URL : `http://${RAW_API_BASE_URL}`
 ).replace(/\/+$/, "");
 
 const axiosInstance = axios.create({

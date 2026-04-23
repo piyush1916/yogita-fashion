@@ -4,7 +4,22 @@ import LoadingState from "../components/ui/LoadingState";
 import { getReturnRequests, updateReturnStatus } from "../services/returnService";
 import { formatCurrency, formatDateTime } from "../utils/formatters";
 
-const STATUS_OPTIONS = ["Pending", "Approved", "Rejected", "Refunded"];
+const STATUS_OPTIONS = ["Pending", "Pickup Started", "Pickup Completed", "Refunded", "Rejected"];
+
+const normalizeReturnStatus = (status) => String(status || "").trim().toLowerCase().replace(/[\s_-]+/g, "");
+
+const getDisplayStatus = (status) => {
+  const normalized = normalizeReturnStatus(status);
+  if (!normalized) return "Pending";
+  if (normalized === "approved" || normalized === "pickupstarted") return "Pickup Started";
+  if (normalized === "completed" || normalized === "returned" || normalized === "pickupcompleted") {
+    return "Pickup Completed";
+  }
+  if (normalized === "pending") return "Pending";
+  if (normalized === "refunded") return "Refunded";
+  if (normalized === "rejected") return "Rejected";
+  return String(status || "").trim();
+};
 
 export default function ReturnsPage() {
   const [returns, setReturns] = useState([]);
@@ -107,7 +122,9 @@ export default function ReturnsPage() {
                     </td>
                     <td>{formatCurrency(item.refundAmount)}</td>
                     <td>
-                      <span className={`status-badge status-${String(item.status || "").toLowerCase()}`}>{item.status}</span>
+                          <span className={`status-badge status-${normalizeReturnStatus(item.status)}`}>
+                            {getDisplayStatus(item.status)}
+                          </span>
                     </td>
                     <td>{formatDateTime(item.createdAt)}</td>
                     <td>
@@ -117,7 +134,7 @@ export default function ReturnsPage() {
                             key={status}
                             type="button"
                             className="btn btn-sm btn-outline"
-                            disabled={savingId === item.id || status === item.status}
+                            disabled={savingId === item.id || normalizeReturnStatus(status) === normalizeReturnStatus(item.status)}
                             onClick={() => handleStatusChange(item, status)}
                           >
                             {savingId === item.id && status !== item.status ? "Saving..." : status}

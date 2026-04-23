@@ -17,7 +17,7 @@ const FilterPanel = ({ categories = [], filters, onChange }) => {
         <select
           value={local.category || ""}
           onChange={(e) => handle("category", e.target.value ? [e.target.value] : [])}
-          className="mt-1 block w-full border-gray-300 rounded"
+          className="mt-1 block w-full border border-gray-300 rounded bg-white text-gray-900"
         >
           <option value="">All</option>
           {categories.map((c) => (
@@ -35,14 +35,14 @@ const FilterPanel = ({ categories = [], filters, onChange }) => {
             placeholder="Min"
             value={local.price?.min || ""}
             onChange={(e) => handle("price", { ...local.price, min: Number(e.target.value) || 0 })}
-            className="w-1/2 border px-2 py-1 rounded"
+            className="w-1/2 border border-gray-300 px-2 py-1 rounded bg-white text-gray-900 placeholder-gray-500"
           />
           <input
             type="number"
             placeholder="Max"
             value={local.price?.max || ""}
             onChange={(e) => handle("price", { ...local.price, max: Number(e.target.value) || 0 })}
-            className="w-1/2 border px-2 py-1 rounded"
+            className="w-1/2 border border-gray-300 px-2 py-1 rounded bg-white text-gray-900 placeholder-gray-500"
           />
         </div>
       </div>

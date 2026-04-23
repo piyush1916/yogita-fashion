@@ -12,6 +12,11 @@ const EMPTY_FORM = {
   brand: "",
   imageUrl: "",
   featuredProduct: false,
+  detailsMaterial: "Cotton blend",
+  detailsFit: "Regular",
+  detailsStyle: "Casual",
+  detailsSleeve: "Half Sleeve",
+  detailsWashCare: "Machine wash",
 };
 
 function validateForm(values) {
@@ -204,6 +209,36 @@ export default function ProductForm({ initialValues, onSubmit, submitLabel, subm
             <img src={values.imageUrl} alt="Product preview" className="form-image-preview" />
           </div>
         ) : null}
+
+        <div className="form-field form-field-wide">
+          <h3 className="form-section-title">Product Details</h3>
+          <p className="form-section-desc">These details will be shown to customers</p>
+        </div>
+
+        <label className="form-field">
+          <span>Material</span>
+          <input name="detailsMaterial" value={values.detailsMaterial} onChange={handleChange} placeholder="Ex: Cotton blend" />
+        </label>
+
+        <label className="form-field">
+          <span>Fit</span>
+          <input name="detailsFit" value={values.detailsFit} onChange={handleChange} placeholder="Ex: Regular" />
+        </label>
+
+        <label className="form-field">
+          <span>Style</span>
+          <input name="detailsStyle" value={values.detailsStyle} onChange={handleChange} placeholder="Ex: Casual" />
+        </label>
+
+        <label className="form-field">
+          <span>Sleeve</span>
+          <input name="detailsSleeve" value={values.detailsSleeve} onChange={handleChange} placeholder="Ex: Half Sleeve" />
+        </label>
+
+        <label className="form-field">
+          <span>Wash Care</span>
+          <input name="detailsWashCare" value={values.detailsWashCare} onChange={handleChange} placeholder="Ex: Machine wash" />
+        </label>
 
         <label className="form-field form-checkbox">
           <input

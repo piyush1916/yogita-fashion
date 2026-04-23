@@ -1,27 +1,5 @@
 import axios from "../api/axios";
 import { API } from "../api/endpoints";
-import { STORAGE_KEYS } from "../utils/constants";
-
-const SERVER_UNAVAILABLE_MESSAGE = "Server unavailable. Support request was not submitted. Please try again.";
-
-function safeParse(json, fallback) {
-  try {
-    const parsed = JSON.parse(json);
-    return parsed ?? fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function getAllRequests() {
-  const raw = localStorage.getItem(STORAGE_KEYS.SUPPORT_REQUESTS);
-  const items = raw ? safeParse(raw, []) : [];
-  return Array.isArray(items) ? items : [];
-}
-
-function saveAllRequests(items) {
-  localStorage.setItem(STORAGE_KEYS.SUPPORT_REQUESTS, JSON.stringify(Array.isArray(items) ? items : []));
-}
 
 function normalizeText(value) {
   return String(value || "").trim();
@@ -59,8 +37,8 @@ function normalizeRequest(rawRequest) {
 function toPayload(payload, user) {
   return {
     userId: Number(user?.id) || 0,
-    name: normalizeText(payload?.name),
-    contact: normalizeText(payload?.contact),
+    name: normalizeText(payload?.name || user?.name),
+    contact: normalizeText(payload?.contact || user?.email || user?.phone),
     subject: normalizeText(payload?.subject) || "General Support",
     message: normalizeText(payload?.message),
     orderId: normalizeText(payload?.orderId),
@@ -70,55 +48,41 @@ function toPayload(payload, user) {
   };
 }
 
+function parseError(error, fallback) {
+  if (!error?.response) return fallback;
+  if (typeof error.response.data?.message === "string") return error.response.data.message;
+  if (typeof error.response.data === "string") return error.response.data;
+  return fallback;
+}
+
 const supportService = {
   async createRequest(payload, user) {
     const requestPayload = toPayload(payload, user);
-    const all = getAllRequests();
-
     try {
       const response = await axios.post(API.SUPPORT, requestPayload);
-      const apiRequest = normalizeRequest(response?.data);
-      if (apiRequest) {
-        saveAllRequests([apiRequest, ...all]);
-        return apiRequest;
+      const request = normalizeRequest(response?.data);
+      if (!request) {
+        throw new Error("Invalid support API response.");
       }
-      throw new Error("Invalid support API response.");
+      return request;
     } catch (error) {
-      if (error?.response) {
-        const message = typeof error.response.data === "string" ? error.response.data : "Unable to submit support request.";
-        throw new Error(message);
-      }
-      throw new Error(SERVER_UNAVAILABLE_MESSAGE);
+      throw new Error(parseError(error, "Unable to submit support request."));
     }
   },
 
-  async listRequestsByUser(user) {
-    const email = normalizeEmail(user?.email);
-    const phone = normalizePhone(user?.phone);
-
-    if (!email && !phone) return [];
-
+  async listRequestsByUser() {
     try {
-      const response = await axios.get(API.SUPPORT);
+      const response = await axios.get(API.SUPPORT_MY);
       const requests = Array.isArray(response?.data) ? response.data : [];
-      const normalized = requests.map(normalizeRequest).filter(Boolean);
-      return normalized
-        .filter((item) => {
-          const itemEmail = normalizeEmail(item?.email || item?.contact);
-          const itemPhone = normalizePhone(item?.phone || item?.contact);
-          return (email && itemEmail === email) || (phone && itemPhone === phone);
-        })
-        .sort((a, b) => Date.parse(b?.createdAt || 0) - Date.parse(a?.createdAt || 0));
-    } catch {
-      return getAllRequests()
+      return requests
         .map(normalizeRequest)
         .filter(Boolean)
-        .filter((item) => {
-          const itemEmail = normalizeEmail(item?.email || item?.contact);
-          const itemPhone = normalizePhone(item?.phone || item?.contact);
-          return (email && itemEmail === email) || (phone && itemPhone === phone);
-        })
         .sort((a, b) => Date.parse(b?.createdAt || 0) - Date.parse(a?.createdAt || 0));
+    } catch (error) {
+      if (error?.response?.status === 401 || error?.response?.status === 403) {
+        return [];
+      }
+      throw new Error(parseError(error, "Unable to load support requests."));
     }
   },
 };

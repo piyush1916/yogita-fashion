@@ -1,7 +1,5 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Input from "../components/common/Input";
-import Button from "../components/common/Button";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../hooks/useToast";
 import { required, validateEmail } from "../utils/validators";
@@ -58,56 +56,79 @@ export default function Register() {
   };
 
   return (
-    <div className="container-page py-10">
-      <div className="mx-auto max-w-md rounded-2xl bg-white p-6 shadow-soft ring-1 ring-slate-200">
-        <h1 className="text-2xl font-extrabold text-slate-900">Register</h1>
-        <p className="mt-1 text-sm text-slate-600">Create your account to start shopping.</p>
+    <section className="auth-page">
+      <div className="auth-shell">
+        <aside className="auth-brand-panel" aria-hidden="true">
+          <div className="auth-brand-content">
+            <div className="auth-brand-mark" />
+            <p className="auth-brand-name">Yogita Fashion</p>
+            <p className="auth-brand-copy">Create your account and unlock a smoother shopping journey.</p>
+          </div>
+        </aside>
 
-        <form className="mt-6 space-y-4" onSubmit={onSubmit}>
-          <Input
-            label="Full Name"
-            name="name"
-            value={form.name}
-            onChange={onChange}
-            error={errors.name}
-            placeholder="Your name"
-            autoComplete="name"
-          />
+        <div className="auth-divider-orb" aria-hidden="true">
+          <span />
+        </div>
 
-          <Input
-            label="Email"
-            name="email"
-            type="email"
-            value={form.email}
-            onChange={onChange}
-            error={errors.email}
-            placeholder="you@example.com"
-            autoComplete="email"
-          />
+        <div className="auth-card auth-card-register">
+          <h1 className="auth-title">Register</h1>
+          <p className="auth-subtitle">Create your account to start shopping.</p>
 
-          <Input
-            label="Password"
-            name="password"
-            type="password"
-            value={form.password}
-            onChange={onChange}
-            error={errors.password}
-            placeholder="Create a password"
-            autoComplete="new-password"
-          />
+          <form className="auth-form" onSubmit={onSubmit} noValidate>
+            <label className="auth-field">
+              <span>Full Name</span>
+              <input
+                name="name"
+                value={form.name}
+                onChange={onChange}
+                placeholder="Your name"
+                autoComplete="name"
+                className={errors.name ? "has-error" : ""}
+              />
+              {errors.name ? <small>{errors.name}</small> : null}
+            </label>
 
-          <Button disabled={loading} className="w-full">
-            {loading ? "Creating..." : "Create Account"}
-          </Button>
-        </form>
+            <label className="auth-field">
+              <span>Email</span>
+              <input
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={onChange}
+                placeholder="you@example.com"
+                autoComplete="email"
+                className={errors.email ? "has-error" : ""}
+              />
+              {errors.email ? <small>{errors.email}</small> : null}
+            </label>
 
-        <div className="mt-5 text-sm text-slate-600">
-          Already have an account?{" "}
-          <Link className="font-semibold text-brand-700 hover:underline" to="/login">
-            Login
-          </Link>
+            <label className="auth-field">
+              <span>Password</span>
+              <input
+                name="password"
+                type="password"
+                value={form.password}
+                onChange={onChange}
+                placeholder="Create a password"
+                autoComplete="new-password"
+                className={errors.password ? "has-error" : ""}
+              />
+              {errors.password ? <small>{errors.password}</small> : null}
+            </label>
+
+            <button type="submit" disabled={loading} className="auth-submit">
+              {loading ? "Creating..." : "Create Account"}
+            </button>
+          </form>
+
+          <div className="auth-switch-row">
+            Already have an account?{" "}
+            <Link className="auth-switch-link" to="/login">
+              Login
+            </Link>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

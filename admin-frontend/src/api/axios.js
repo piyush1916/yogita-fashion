@@ -4,7 +4,7 @@ const RAW_API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5037"
 ).trim();
 const API_BASE_URL = (
-  /^https?:\/\//i.test(RAW_API_BASE_URL) ? RAW_API_BASE_URL : `https://${RAW_API_BASE_URL}`
+  /^https?:\/\//i.test(RAW_API_BASE_URL) ? RAW_API_BASE_URL : `http://${RAW_API_BASE_URL}`
 ).replace(/\/+$/, "");
 
 const apiClient = axios.create({
@@ -28,8 +28,8 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error?.response?.status;
-    const requestUrl = String(error?.config?.url || "");
-    const isLoginRequest = requestUrl.includes("/api/Auth/login");
+    const requestUrl = String(error?.config?.url || "").toLowerCase();
+    const isLoginRequest = requestUrl.includes("/api/auth/login");
 
     if (status === 401 && !isLoginRequest) {
       localStorage.removeItem("yf_admin_session");

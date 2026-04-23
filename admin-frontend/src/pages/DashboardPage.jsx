@@ -47,6 +47,7 @@ export default function DashboardPage() {
     repeatCustomers: [],
     repeatCustomerCount: 0,
     statusBreakdown: [],
+    warnings: [],
   });
 
   const loadSummary = useCallback(async () => {
@@ -190,20 +191,27 @@ export default function DashboardPage() {
   }
 
   return (
-    <section className="dashboard-v2">
-      <PageHeader
-        title="Digital Command Center"
-        description="Live snapshot of store operations, sales velocity, and customer activity."
+      <section className="dashboard-v2">
+        <PageHeader
+          title="Digital Command Center"
+          description="Live snapshot of store operations, sales velocity, and customer activity."
         action={
           <button type="button" className="btn btn-outline" onClick={loadSummary} disabled={loading}>
             Refresh Overview
           </button>
         }
-      />
+        />
 
-      {actionMessage ? <p className="inline-success">{actionMessage}</p> : null}
+        {actionMessage ? <p className="inline-success">{actionMessage}</p> : null}
+        {summary.warnings.length > 0 ? (
+          <div className="panel">
+            <p className="form-error-banner">
+              Some dashboard sections could not load: {summary.warnings[0]}
+            </p>
+          </div>
+        ) : null}
 
-      <div className="dash2-hero panel">
+        <div className="dash2-hero panel">
         <div className="dash2-hero-main">
           <p className="dash2-kicker">Operations Snapshot</p>
           <h2>Store pulse looks {deliveryRate >= 70 ? "healthy" : "watchful"} today</h2>

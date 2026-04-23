@@ -36,6 +36,46 @@ const formatOrderDate = (iso) => {
   });
 };
 
+const formatDateTime = (iso) => {
+  const ts = parseDate(iso);
+  if (!ts) return "N/A";
+  return new Date(ts).toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const RETURN_TRACKING_STEPS = ["Pending", "Pickup Started", "Pickup Completed", "Refunded"];
+
+const normalizeReturnStatus = (status) => String(status || "").trim().toLowerCase().replace(/[\s_-]+/g, "");
+
+const getReturnDisplayStatus = (status) => {
+  const normalized = normalizeReturnStatus(status);
+  if (!normalized) return "";
+
+  if (normalized === "approved" || normalized === "pickupstarted") return "Pickup Started";
+  if (normalized === "completed" || normalized === "returned" || normalized === "pickupcompleted") {
+    return "Pickup Completed";
+  }
+  if (normalized === "pending") return "Pending";
+  if (normalized === "refunded") return "Refunded";
+  if (normalized === "rejected") return "Rejected";
+  return String(status || "").trim();
+};
+
+const getReturnTrackingIndex = (status) => {
+  const normalized = normalizeReturnStatus(status);
+  if (!normalized) return -1;
+  if (normalized === "pending") return 0;
+  if (normalized === "approved" || normalized === "pickupstarted") return 1;
+  if (normalized === "completed" || normalized === "returned" || normalized === "pickupcompleted") return 2;
+  if (normalized === "refunded") return 3;
+  return -1;
+};
+
 const orderMatchesSearch = (order, query) => {
   if (!query) return true;
   const q = query.toLowerCase();
@@ -69,10 +109,12 @@ export default function Orders() {
     const load = async () => {
       try {
         setLoading(true);
-        const [orders, returns] = await Promise.all([
-          ordersService.listOrders(),
+        const [ordersResult, returnsResult] = await Promise.allSettled([
+          ordersService.listOrders(user),
           user ? returnsService.getMyReturnRequests() : Promise.resolve([]),
         ]);
+        const orders = ordersResult.status === "fulfilled" ? ordersResult.value : [];
+        const returns = returnsResult.status === "fulfilled" ? returnsResult.value : [];
         if (mounted) {
           setAllOrders(Array.isArray(orders) ? orders : []);
           setMyReturns(Array.isArray(returns) ? returns : []);
@@ -88,10 +130,10 @@ export default function Orders() {
     };
   }, [user]);
 
-  const returnStatusByKey = useMemo(() => {
+  const returnRequestByKey = useMemo(() => {
     return myReturns.reduce((acc, item) => {
       const key = `${item.orderId}_${item.itemProductId}`;
-      acc[key] = item.status;
+      acc[key] = item;
       return acc;
     }, {});
   }, [myReturns]);
@@ -126,6 +168,8 @@ export default function Orders() {
       const message =
         typeof error?.response?.data?.message === "string"
           ? error.response.data.message
+          : typeof error?.message === "string" && error.message.trim()
+          ? error.message.trim()
           : "Unable to submit return request.";
       toast.error(message);
     } finally {
@@ -135,14 +179,20 @@ export default function Orders() {
 
   const userOrders = useMemo(() => {
     if (!user) return [];
+    const userId = Number(user.id) || 0;
     const email = (user.email || "").trim().toLowerCase();
-    const phone = (user.phone || "").trim();
+    const phone = String(user.phone || "").replace(/\D+/g, "");
 
     return allOrders.filter((order) => {
+      const orderUserId = Number(order?.userId) || 0;
+      if (userId > 0 && orderUserId > 0 && orderUserId === userId) {
+        return true;
+      }
+
       const orderEmail = String(order?.email || "")
         .trim()
         .toLowerCase();
-      const orderPhone = String(order?.phone || "").trim();
+      const orderPhone = String(order?.phone || "").replace(/\D+/g, "");
       return (email && orderEmail === email) || (phone && orderPhone === phone);
     });
   }, [allOrders, user]);
@@ -299,9 +349,13 @@ export default function Orders() {
               const canShowMrp = Number(leadItem?.mrp) > Number(leadItem?.price);
               const leadProductId = String(leadItem?.productId || "").trim();
               const returnKey = `${order.id}_${leadProductId}`;
-              const returnStatus = returnStatusByKey[returnKey] || "";
+              const returnRequest = returnRequestByKey[returnKey] || null;
+              const returnStatus = returnRequest?.status || "";
+              const returnDisplayStatus = getReturnDisplayStatus(returnStatus);
+              const returnTrackingIndex = getReturnTrackingIndex(returnStatus);
+              const isReturnRejected = normalizeReturnStatus(returnStatus) === "rejected";
               const canRequestReturn =
-                String(order.status || "").toLowerCase() === "delivered" && Boolean(leadProductId) && !returnStatus;
+                String(order.status || "").toLowerCase() === "delivered" && Boolean(leadProductId) && !returnRequest;
 
               return (
                 <article key={order.id} className="ordersCard">
@@ -360,8 +414,50 @@ export default function Orders() {
                             {requestingReturnKey === returnKey ? "Submitting..." : "Request Return"}
                           </button>
                         ) : null}
-                        {returnStatus ? <span className="ordersReturnChip">Return: {returnStatus}</span> : null}
+                        {returnDisplayStatus ? <span className="ordersReturnChip">Return: {returnDisplayStatus}</span> : null}
                       </div>
+
+                      {returnRequest ? (
+                        <div className="ordersReturnTracking">
+                          <p className="ordersReturnTrackingTitle">Return Tracking</p>
+                          <p className="ordersReturnTrackingMeta">
+                            Updated: {formatDateTime(returnRequest.updatedAt || returnRequest.createdAt)}
+                          </p>
+
+                          {isReturnRejected ? (
+                            <p className="ordersReturnTrackingRejected">
+                              Request rejected. Please contact support for help with this order.
+                            </p>
+                          ) : (
+                            <div className="ordersReturnTimeline">
+                              {RETURN_TRACKING_STEPS.map((step, index) => {
+                                const isDone = returnTrackingIndex >= index;
+                                const isCurrent = returnTrackingIndex === index;
+                                return (
+                                  <span
+                                    key={`${returnRequest.id}-${step}`}
+                                    className={`ordersReturnStep ${isDone ? "isDone" : ""} ${
+                                      isCurrent ? "isCurrent" : ""
+                                    }`}
+                                  >
+                                    {step}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                          {returnRequest.adminRemark ? (
+                            <p className="ordersReturnTrackingMeta">Admin note: {returnRequest.adminRemark}</p>
+                          ) : null}
+
+                          {Number(returnRequest.refundAmount) > 0 ? (
+                            <p className="ordersReturnTrackingMeta">
+                              Refund amount: {formatCurrency(returnRequest.refundAmount)}
+                            </p>
+                          ) : null}
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 </article>

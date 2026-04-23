@@ -1,7 +1,5 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import Input from "../components/common/Input";
-import Button from "../components/common/Button";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../hooks/useToast";
 import { required, validateEmail } from "../utils/validators";
@@ -54,51 +52,71 @@ export default function Login() {
   };
 
   return (
-    <div className="container-page py-10">
-      <div className="mx-auto max-w-md rounded-2xl bg-white p-6 shadow-soft ring-1 ring-slate-200">
-        <h1 className="text-2xl font-extrabold text-slate-900">Login</h1>
-        <p className="mt-1 text-sm text-slate-600">Welcome back! Login to continue.</p>
+    <section className="auth-page">
+      <div className="auth-shell">
+        <aside className="auth-brand-panel" aria-hidden="true">
+          <div className="auth-brand-content">
+            <div className="auth-brand-mark" />
+            <p className="auth-brand-name">Yogita Fashion</p>
+            <p className="auth-brand-copy">Secure access for your personalized shopping experience.</p>
+          </div>
+        </aside>
 
-        <form className="mt-6 space-y-4" onSubmit={onSubmit}>
-          <Input
-            label="Email"
-            name="email"
-            type="email"
-            value={form.email}
-            onChange={onChange}
-            error={errors.email}
-            placeholder="you@example.com"
-            autoComplete="email"
-          />
-
-          <Input
-            label="Password"
-            name="password"
-            type="password"
-            value={form.password}
-            onChange={onChange}
-            error={errors.password}
-            placeholder="••••••••"
-            autoComplete="current-password"
-          />
-
-          <Button disabled={loading} className="w-full">
-            {loading ? "Logging in..." : "Login"}
-          </Button>
-        </form>
-
-        <div className="mt-5 text-sm text-slate-600">
-          Don&apos;t have an account?{" "}
-          <Link className="font-semibold text-brand-700 hover:underline" to="/register">
-            Register
-          </Link>
+        <div className="auth-divider-orb" aria-hidden="true">
+          <span />
         </div>
 
-        <div className="mt-6 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
-          <div className="font-semibold">Demo tip</div>
-          <div>Register once, then use the same email/password to login.</div>
+        <div className="auth-card">
+          <h1 className="auth-title">Login</h1>
+          <p className="auth-subtitle">Welcome back! Login to continue.</p>
+
+          <form className="auth-form" onSubmit={onSubmit} noValidate>
+            <label className="auth-field">
+              <span>Email</span>
+              <input
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={onChange}
+                placeholder="you@example.com"
+                autoComplete="email"
+                className={errors.email ? "has-error" : ""}
+              />
+              {errors.email ? <small>{errors.email}</small> : null}
+            </label>
+
+            <label className="auth-field">
+              <span>Password</span>
+              <input
+                name="password"
+                type="password"
+                value={form.password}
+                onChange={onChange}
+                placeholder="********"
+                autoComplete="current-password"
+                className={errors.password ? "has-error" : ""}
+              />
+              {errors.password ? <small>{errors.password}</small> : null}
+            </label>
+
+            <button type="submit" disabled={loading} className="auth-submit">
+              {loading ? "Logging in..." : "Login"}
+            </button>
+          </form>
+
+          <div className="auth-switch-row">
+            Don&apos;t have an account?{" "}
+            <Link className="auth-switch-link" to="/register">
+              Register
+            </Link>
+          </div>
+
+          <div className="auth-tip">
+            <div className="auth-tip-title">Demo tip</div>
+            <div>Register once, then use the same email/password to login.</div>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

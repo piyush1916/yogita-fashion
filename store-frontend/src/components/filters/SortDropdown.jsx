@@ -4,7 +4,7 @@ const SortDropdown = ({ value, onChange, options = [] }) => (
   <select
     value={value || ""}
     onChange={(e) => onChange(e.target.value)}
-    className="border px-2 py-1 rounded"
+    className="border border-gray-300 px-2 py-1 rounded bg-white text-gray-900"
   >
     <option value="">Sort By</option>
     {options.map((opt) => (

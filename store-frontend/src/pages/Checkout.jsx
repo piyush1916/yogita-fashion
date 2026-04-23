@@ -16,7 +16,7 @@ const normalizeIssueProductId = (value) => {
 
 const Checkout = () => {
   const { user } = useAuth();
-  const { items, clearCart, subtotal, removeFromCart, updateQty } = useCart();
+  const { items, clearCart, total, coupon, discount, removeFromCart, updateQty } = useCart();
   const navigate = useNavigate();
   const toast = useToast();
   const [form, setForm] = useState({
@@ -115,7 +115,9 @@ const Checkout = () => {
         ...form,
         userId: Number(user?.id) || 0,
         items,
-        total: subtotal,
+        total,
+        couponCode: coupon || "",
+        discountAmount: Number(discount) || 0,
       });
       clearCart();
       navigate("/track-order", {
@@ -138,37 +140,37 @@ const Checkout = () => {
       <div className="max-w-lg space-y-4">
         <div>
           <label>Name</label>
-          <input name="name" value={form.name} onChange={handleChange} className="w-full border px-2 py-1 rounded" />
+          <input name="name" value={form.name} onChange={handleChange} className="w-full border border-gray-300 px-2 py-1 rounded bg-white text-gray-900" />
           {errors.name && <p className="text-red-600 text-sm">{errors.name}</p>}
         </div>
         <div>
           <label>Phone</label>
-          <input name="phone" value={form.phone} onChange={handleChange} className="w-full border px-2 py-1 rounded" />
+          <input name="phone" value={form.phone} onChange={handleChange} className="w-full border border-gray-300 px-2 py-1 rounded bg-white text-gray-900" />
           {errors.phone && <p className="text-red-600 text-sm">{errors.phone}</p>}
         </div>
         <div>
           <label>Email</label>
-          <input name="email" value={form.email} onChange={handleChange} className="w-full border px-2 py-1 rounded" />
+          <input name="email" value={form.email} onChange={handleChange} className="w-full border border-gray-300 px-2 py-1 rounded bg-white text-gray-900" />
           {errors.email && <p className="text-red-600 text-sm">{errors.email}</p>}
         </div>
         <div>
           <label>Address</label>
-          <input name="address" value={form.address} onChange={handleChange} className="w-full border px-2 py-1 rounded" />
+          <input name="address" value={form.address} onChange={handleChange} className="w-full border border-gray-300 px-2 py-1 rounded bg-white text-gray-900" />
           {errors.address && <p className="text-red-600 text-sm">{errors.address}</p>}
         </div>
         <div>
           <label>City</label>
-          <input name="city" value={form.city} onChange={handleChange} className="w-full border px-2 py-1 rounded" />
+          <input name="city" value={form.city} onChange={handleChange} className="w-full border border-gray-300 px-2 py-1 rounded bg-white text-gray-900" />
           {errors.city && <p className="text-red-600 text-sm">{errors.city}</p>}
         </div>
         <div>
           <label>Pincode</label>
-          <input name="pincode" value={form.pincode} onChange={handleChange} className="w-full border px-2 py-1 rounded" />
+          <input name="pincode" value={form.pincode} onChange={handleChange} className="w-full border border-gray-300 px-2 py-1 rounded bg-white text-gray-900" />
           {errors.pincode && <p className="text-red-600 text-sm">{errors.pincode}</p>}
         </div>
         <div>
           <h3 className="font-semibold">Payment</h3>
-          <select name="payment" value={form.payment} onChange={handleChange} className="w-full border px-2 py-1 rounded">
+          <select name="payment" value={form.payment} onChange={handleChange} className="w-full border border-gray-300 px-2 py-1 rounded bg-white text-gray-900">
             <option value="COD">Cash on Delivery</option>
             <option value="ONLINE">Online (placeholder)</option>
           </select>

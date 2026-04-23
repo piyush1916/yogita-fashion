@@ -173,7 +173,7 @@ export async function requestStockAlert(productId, payload) {
     whatsAppNumber: String(rawWhatsApp).trim(),
   };
 
-  const response = await axios.post(`${API.PRODUCT_STOCK_ALERTS}/${targetId}/stock-alerts`, safePayload);
+  const response = await axios.post(`${API.PRODUCTS}/${targetId}/stock-alerts`, safePayload);
   return response?.data;
 }
 

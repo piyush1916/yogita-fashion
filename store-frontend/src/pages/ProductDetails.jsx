@@ -246,12 +246,12 @@ const ProductDetails = () => {
 
           <div className="mt-6">
             <h3 className="font-semibold">Product Details</h3>
-            <ul className="list-disc list-inside">
-              <li>Material: {product.details.material}</li>
-              <li>Fit: {product.details.fit}</li>
-              <li>Style: {product.details.style}</li>
-              <li>Sleeve: {product.details.sleeve}</li>
-              <li>Wash care: {product.details.washCare}</li>
+            <ul className="list-disc list-inside space-y-1">
+              {product.details?.material && <li>Material: {product.details.material}</li>}
+              {product.details?.fit && <li>Fit: {product.details.fit}</li>}
+              {product.details?.style && <li>Style: {product.details.style}</li>}
+              {product.details?.sleeve && <li>Sleeve: {product.details.sleeve}</li>}
+              {product.details?.washCare && <li>Wash care: {product.details.washCare}</li>}
             </ul>
           </div>
           <div className="mt-6">

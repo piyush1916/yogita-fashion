@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import cartService from "../services/cartService";
 import couponsService from "../services/couponsService";
+import { STORAGE_KEYS } from "../utils/constants";
 
 const CartContext = createContext(null);
 
@@ -27,6 +28,18 @@ function normalizeItem(item) {
 function normalizeItems(items) {
   if (!Array.isArray(items)) return [];
   return items.map(normalizeItem).filter(Boolean);
+}
+
+function getSessionUserId() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.AUTH_SESSION);
+    if (!raw) return 0;
+    const parsed = JSON.parse(raw);
+    const id = Number(parsed?.id ?? parsed?.Id ?? 0);
+    return Number.isFinite(id) && id > 0 ? id : 0;
+  } catch {
+    return 0;
+  }
 }
 
 export function CartProvider({ children }) {
@@ -168,6 +181,7 @@ export function CartProvider({ children }) {
       subtotal,
       itemCount: totalItems,
       currentCoupon: coupon,
+      userId: getSessionUserId(),
     });
     const isSuccess = Boolean(res?.ok ?? res?.valid);
     const discountAmount = Number.isFinite(Number(res?.discountAmount))
@@ -177,7 +191,7 @@ export function CartProvider({ children }) {
       : 0;
 
     if (!isSuccess) {
-      setCoupon(trimmed);
+      setCoupon("");
       setDiscount(0);
       setCouponError(res?.message || "Invalid coupon.");
       return { ok: false, message: res?.message || "Invalid coupon.", discountAmount: 0 };

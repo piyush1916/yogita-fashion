@@ -26,8 +26,12 @@ export const SORT_OPTIONS = [
 export const ORDER_STATUSES = [
   "Pending",
   "Confirmed",
+  "Packed",
   "Shipped",
   "Delivered",
+  "Returned",
+  "Refunded",
+  "Cancelled",
 ];
 
 export const STORAGE_KEYS = {

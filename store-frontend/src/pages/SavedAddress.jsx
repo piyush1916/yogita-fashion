@@ -61,19 +61,37 @@ export default function SavedAddress() {
   const [editingId, setEditingId] = useState("");
 
   useEffect(() => {
-    if (!user) return;
-    setAddresses(addressService.listByUser(user));
-  }, [user]);
+    if (!user) {
+      setAddresses([]);
+      return;
+    }
+
+    let ignore = false;
+    const loadAddresses = async () => {
+      try {
+        const items = await addressService.listByUser();
+        if (!ignore) setAddresses(items);
+      } catch {
+        if (!ignore) {
+          setAddresses([]);
+          toast.error("Unable to load saved addresses.");
+        }
+      }
+    };
+
+    loadAddresses();
+    return () => {
+      ignore = true;
+    };
+  }, [user, toast]);
 
   const visibleAddresses = useMemo(() => {
     return [...addresses].sort((a, b) => Number(Boolean(b.isDefault)) - Number(Boolean(a.isDefault)));
   }, [addresses]);
 
-  const persist = (nextAddresses) => {
-    setAddresses(nextAddresses);
-    if (user) {
-      addressService.saveByUser(user, nextAddresses);
-    }
+  const reloadAddresses = async () => {
+    const items = await addressService.listByUser();
+    setAddresses(items);
   };
 
   const onChange = (e) => {
@@ -94,7 +112,7 @@ export default function SavedAddress() {
     setEditingId("");
   };
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
     const nextErrors = validateAddress(form);
     if (Object.keys(nextErrors).length > 0) {
@@ -104,40 +122,23 @@ export default function SavedAddress() {
     }
 
     const payload = normalizeAddress(form);
-    const now = new Date().toISOString();
-    const forceDefault = addresses.length === 0;
+    const forceDefault = addresses.length === 0 && !editingId;
+    payload.isDefault = payload.isDefault || forceDefault;
 
-    if (editingId) {
-      const next = addresses.map((address) => {
-        if (address.id !== editingId) {
-          return payload.isDefault || forceDefault ? { ...address, isDefault: false } : address;
-        }
-        return {
-          ...address,
-          ...payload,
-          isDefault: payload.isDefault || forceDefault,
-          updatedAt: now,
-        };
-      });
-      persist(next);
-      toast.success("Address updated.");
+    try {
+      if (editingId) {
+        await addressService.updateAddress(editingId, payload);
+        toast.success("Address updated.");
+      } else {
+        await addressService.createAddress(payload);
+        toast.success("Address saved.");
+      }
+
+      await reloadAddresses();
       resetForm();
-      return;
+    } catch {
+      toast.error("Unable to save address.");
     }
-
-    const newAddress = {
-      id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      ...payload,
-      isDefault: payload.isDefault || forceDefault,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    const next = (payload.isDefault || forceDefault ? addresses.map((address) => ({ ...address, isDefault: false })) : addresses)
-      .concat(newAddress);
-    persist(next);
-    toast.success("Address saved.");
-    resetForm();
   };
 
   const onEdit = (address) => {
@@ -157,29 +158,38 @@ export default function SavedAddress() {
     });
   };
 
-  const onDelete = (id) => {
-    const addressToDelete = addresses.find((address) => address.id === id);
-    const remaining = addresses.filter((address) => address.id !== id);
-    if (addressToDelete?.isDefault && remaining.length > 0) {
-      remaining[0] = { ...remaining[0], isDefault: true };
+  const onDelete = async (id) => {
+    try {
+      await addressService.deleteAddress(id);
+      if (editingId === id) {
+        resetForm();
+      }
+      await reloadAddresses();
+      toast.info("Address removed.");
+    } catch {
+      toast.error("Unable to remove address.");
     }
-    persist(remaining);
-    if (editingId === id) {
-      resetForm();
-    }
-    toast.info("Address removed.");
   };
 
-  const onSetDefault = (id) => {
-    const next = addresses.map((address) => ({
-      ...address,
-      isDefault: address.id === id,
-    }));
-    persist(next);
-    if (editingId === id) {
-      setForm((prev) => ({ ...prev, isDefault: true }));
+  const onSetDefault = async (id) => {
+    try {
+      const target = addresses.find((address) => address.id === id);
+      if (!target) return;
+
+      const updates = addresses
+        .filter((address) => address.id !== id && address.isDefault)
+        .map((address) => addressService.updateAddress(address.id, { ...address, isDefault: false }));
+      await Promise.all(updates);
+      await addressService.updateAddress(id, { ...target, isDefault: true });
+      await reloadAddresses();
+
+      if (editingId === id) {
+        setForm((prev) => ({ ...prev, isDefault: true }));
+      }
+      toast.success("Default address updated.");
+    } catch {
+      toast.error("Unable to set default address.");
     }
-    toast.success("Default address updated.");
   };
 
   if (!user) {

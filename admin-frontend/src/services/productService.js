@@ -87,6 +87,13 @@ function toApiPayload(product) {
     imageUrl: String(product.imageUrl || "").trim(),
     featuredProduct: Boolean(product.featuredProduct),
     isBestSeller: Boolean(product.featuredProduct),
+    details: {
+      material: String(product.detailsMaterial || "").trim(),
+      fit: String(product.detailsFit || "").trim(),
+      style: String(product.detailsStyle || "").trim(),
+      sleeve: String(product.detailsSleeve || "").trim(),
+      washCare: String(product.detailsWashCare || "").trim(),
+    },
   };
 }
 
