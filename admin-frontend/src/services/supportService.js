@@ -32,3 +32,11 @@ export async function getSupportRequests() {
   const items = Array.isArray(response?.data) ? response.data : [];
   return items.map(normalizeSupportRequest).filter(Boolean);
 }
+
+export async function updateSupportRequestStatus(id, status) {
+  const response = await apiClient.patch(`${API.SUPPORT_REQUESTS}/${id}/status`, {
+    status,
+  });
+
+  return normalizeSupportRequest(response?.data);
+}

@@ -331,13 +331,13 @@ namespace YogitaFashionAPI.Controllers
         {
             return new
             {
-                user.Id,
-                user.Name,
-                user.Email,
-                user.Phone,
-                user.City,
-                user.Role,
-                user.CreatedAt
+                id = user.Id,
+                name = user.Name,
+                email = user.Email,
+                phone = user.Phone,
+                city = user.City,
+                role = user.Role,
+                createdAt = user.CreatedAt
             };
         }
     }

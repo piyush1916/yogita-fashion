@@ -61,12 +61,12 @@ const Shop = () => {
       <div className="mb-4">
         <SearchBar value={search} onChange={setSearch} />
       </div>
-      <div className="flex flex-col lg:flex-row gap-6">
-        <div className="lg:w-1/4">
+      <div className="flex flex-col gap-6 lg:flex-row">
+        <div className="min-w-0 lg:w-1/4">
           <FilterPanel categories={categories} filters={filters} onChange={setFilters} />
         </div>
-        <div className="lg:w-3/4">
-          <div className="mb-4 flex items-center justify-end">
+        <div className="min-w-0 lg:w-3/4">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
             <SortDropdown value={sort} onChange={setSort} options={SORT_OPTIONS} />
           </div>
           {loading ? (

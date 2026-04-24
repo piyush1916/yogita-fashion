@@ -15,17 +15,22 @@ function normalizePrice(value) {
 }
 
 function toWishlistItem(product) {
-  const productId = normalizeProductId(product?.id ?? product?.productId);
+  const productId = normalizeProductId(product?.productId ?? product?.id);
   if (!productId) return null;
 
+  const wishlistItemId = normalizeProductId(
+    product?.wishlistItemId ?? product?.wishlistId ?? (product?.productId != null ? product?.id : "")
+  );
+
   return {
+    wishlistItemId,
     productId,
     title: product?.title || product?.name || "Untitled Product",
     image: product?.image || product?.images?.[0] || product?.imageUrl || "",
     price: normalizePrice(product?.price),
     mrp: normalizePrice(product?.mrp ?? product?.originalPrice),
     category: product?.category || "",
-    addedAt: product?.addedAt || new Date().toISOString(),
+    addedAt: product?.addedAt || product?.createdAt || new Date().toISOString(),
   };
 }
 
@@ -107,8 +112,16 @@ export function WishlistProvider({ children }) {
     }
 
     try {
-      await wishlistService.addItem(nextItem.productId);
-      setItems((prev) => [nextItem, ...prev.filter((item) => item.productId !== nextItem.productId)]);
+      const savedItem = await wishlistService.addItem(nextItem.productId);
+      const savedProductId = normalizeProductId(savedItem?.productId ?? nextItem.productId);
+      setItems((prev) => [
+        {
+          ...nextItem,
+          wishlistItemId: savedItem?.id || nextItem.wishlistItemId,
+          productId: savedProductId,
+        },
+        ...prev.filter((item) => item.productId !== savedProductId),
+      ]);
     } catch {
       // Keep current state if wishlist sync fails.
     }

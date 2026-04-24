@@ -11,9 +11,9 @@ const emptyForm = {
   city: "",
 };
 
-const formatJoinedAt = (id) => {
-  const timestamp = Number(id);
-  if (!Number.isFinite(timestamp) || timestamp <= 0) return "N/A";
+const formatJoinedAt = (value) => {
+  const timestamp = Date.parse(String(value || ""));
+  if (!Number.isFinite(timestamp)) return "N/A";
   return new Date(timestamp).toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
@@ -136,7 +136,7 @@ export default function Profile() {
             </div>
             <div className="profileMetaRow">
               <span>Joined</span>
-              <strong>{formatJoinedAt(user.id)}</strong>
+              <strong>{formatJoinedAt(user.createdAt)}</strong>
             </div>
           </div>
 

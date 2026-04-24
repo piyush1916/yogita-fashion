@@ -85,7 +85,7 @@ export default function ProductsPage() {
           <p className="empty-text">No products found.</p>
         ) : (
           <div className="table-wrap">
-            <table className="table">
+            <table className="table table-mobile-stack">
               <thead>
                 <tr>
                   <th>Product</th>
@@ -99,7 +99,7 @@ export default function ProductsPage() {
               <tbody>
                 {filteredProducts.map((product) => (
                   <tr key={product.id}>
-                    <td>
+                    <td data-label="Product">
                       <div className="product-cell">
                         <img
                           src={product.imageUrl || "https://via.placeholder.com/80x80?text=Product"}
@@ -112,27 +112,27 @@ export default function ProductsPage() {
                         </div>
                       </div>
                     </td>
-                    <td>{product.category || "-"}</td>
-                    <td>
+                    <td data-label="Category">{product.category || "-"}</td>
+                    <td data-label="Price">
                       <p>{formatCurrency(product.price)}</p>
                       {Number(product.originalPrice) > Number(product.price) ? (
                         <p className="strike-text">{formatCurrency(product.originalPrice)}</p>
                       ) : null}
                     </td>
-                    <td>
+                    <td data-label="Stock">
                       <p>{product.stock}</p>
                       {product.isOutOfStock ? (
                         <span className="status-badge status-cancelled">Out of stock</span>
                       ) : product.isLowStock ? (
                         <span className="status-badge status-pending">Low stock</span>
-                      ) : null}
+                        ) : null}
                     </td>
-                    <td>
+                    <td data-label="Featured">
                       <span className={`status-badge ${product.featuredProduct ? "status-featured" : "status-neutral"}`}>
                         {product.featuredProduct ? "Yes" : "No"}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Actions">
                       <div className="table-actions">
                         <Link className="btn btn-sm btn-outline" to={`/products/${product.id}/edit`}>
                           Edit

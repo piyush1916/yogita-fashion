@@ -26,6 +26,7 @@ function normalizeUser(user) {
     phone: String(user.phone ?? user.Phone ?? "").trim(),
     city: String(user.city ?? user.City ?? "").trim(),
     role: String(user.role ?? user.Role ?? "Customer").trim(),
+    createdAt: String(user.createdAt ?? user.CreatedAt ?? "").trim(),
   };
 }
 
@@ -96,6 +97,7 @@ const registerLocal = async ({ name, email, password, phone, city }) => {
     phone: String(phone || "").trim(),
     city: String(city || "").trim(),
     role: "Customer",
+    createdAt: new Date().toISOString(),
   };
   users.push(user);
   saveUsers(users);
@@ -134,6 +136,7 @@ const updateProfileLocal = async (payload) => {
     phone: String(payload?.phone ?? session.phone ?? "").trim(),
     city: String(payload?.city ?? session.city ?? "").trim(),
     name: String(payload?.name ?? session.name ?? "").trim(),
+    createdAt: String(payload?.createdAt ?? session.createdAt ?? "").trim(),
   };
 
   if (index >= 0) {
@@ -213,6 +216,29 @@ const updateProfile = async (payload) => {
   }
 };
 
+const getProfile = async (id) => {
+  const targetId = String(id || "").trim();
+  if (!targetId) return null;
+  if (!getToken()) throw new Error("Please login again.");
+
+  try {
+    const res = await axios.get(`${API.AUTH_PROFILE}/${targetId}`);
+    const user = normalizeUser(res?.data?.user ?? res?.data);
+    if (!user) throw new Error("Invalid profile response");
+    return syncUser(user, getToken());
+  } catch (error) {
+    if (error?.response?.status === 401 || error?.response?.status === 403) {
+      logout();
+      return null;
+    }
+    if (error?.response) {
+      const message = typeof error.response.data === "string" ? error.response.data : "Unable to load profile.";
+      throw new Error(message);
+    }
+    throw new Error(SERVER_UNAVAILABLE_MESSAGE);
+  }
+};
+
 const logout = () => {
   localStorage.removeItem(STORAGE_KEYS.AUTH_SESSION);
   localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
@@ -231,4 +257,4 @@ const profile = () => {
   return session;
 };
 
-export default { register, login, updateProfile, logout, profile };
+export default { register, login, updateProfile, getProfile, logout, profile };

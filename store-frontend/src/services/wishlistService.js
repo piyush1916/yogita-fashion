@@ -45,8 +45,9 @@ function normalizeApiWishlistItem(rawItem) {
   const productId = normalizeProductId(rawItem.productId ?? rawItem.ProductId);
   if (!productId) return null;
   return {
-    id: String(rawItem.id ?? rawItem.Id ?? ""),
+    id: String(rawItem.wishlistItemId ?? rawItem.WishlistItemId ?? rawItem.id ?? rawItem.Id ?? ""),
     productId,
+    addedAt: String(rawItem.createdAt ?? rawItem.CreatedAt ?? "").trim(),
   };
 }
 

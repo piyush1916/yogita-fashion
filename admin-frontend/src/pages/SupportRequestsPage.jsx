@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import PageHeader from "../components/ui/PageHeader";
 import LoadingState from "../components/ui/LoadingState";
-import { getSupportRequests } from "../services/supportService";
+import { getSupportRequests, updateSupportRequestStatus } from "../services/supportService";
 import { formatDateTime } from "../utils/formatters";
+
+const SUPPORT_STATUS_OPTIONS = ["Open", "Pending", "In Progress", "Resolved", "Closed"];
 
 export default function SupportRequestsPage() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [updatingId, setUpdatingId] = useState("");
 
   useEffect(() => {
     let ignore = false;
@@ -59,6 +62,24 @@ export default function SupportRequestsPage() {
     );
   }, [requests, search]);
 
+  const handleStatusChange = async (requestId, nextStatus) => {
+    setUpdatingId(requestId);
+    setError("");
+
+    try {
+      const updatedItem = await updateSupportRequestStatus(requestId, nextStatus);
+      if (!updatedItem) {
+        throw new Error("Invalid support API response.");
+      }
+
+      setRequests((prev) => prev.map((item) => (item.id === requestId ? updatedItem : item)));
+    } catch {
+      setError("Failed to update support request status.");
+    } finally {
+      setUpdatingId("");
+    }
+  };
+
   return (
     <section>
       <PageHeader
@@ -85,7 +106,7 @@ export default function SupportRequestsPage() {
           <p className="empty-text">No support requests found.</p>
         ) : (
           <div className="table-wrap">
-            <table className="table">
+            <table className="table table-mobile-stack">
               <thead>
                 <tr>
                   <th>Ticket</th>
@@ -100,18 +121,34 @@ export default function SupportRequestsPage() {
               <tbody>
                 {filteredRequests.map((item) => (
                   <tr key={item.id}>
-                    <td>#{item.id}</td>
-                    <td>{item.subject || "-"}</td>
-                    <td>
+                    <td data-label="Ticket">#{item.id}</td>
+                    <td data-label="Subject">{item.subject || "-"}</td>
+                    <td data-label="Customer">
                       <p>{item.name || "-"}</p>
                       <p className="row-meta">{item.contact || item.email || item.phone || "-"}</p>
                     </td>
-                    <td>{item.orderId || "-"}</td>
-                    <td>
-                      <span className={`status-badge status-${String(item.status || "").toLowerCase()}`}>{item.status}</span>
+                    <td data-label="Order">{item.orderId || "-"}</td>
+                    <td data-label="Status">
+                      <div className="table-actions">
+                        <span className={`status-badge status-${String(item.status || "").toLowerCase().replace(/\s+/g, "-")}`}>
+                          {item.status}
+                        </span>
+                        <select
+                          className="table-select"
+                          value={item.status}
+                          onChange={(event) => handleStatusChange(item.id, event.target.value)}
+                          disabled={updatingId === item.id}
+                        >
+                          {SUPPORT_STATUS_OPTIONS.map((status) => (
+                            <option key={status} value={status}>
+                              {status}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </td>
-                    <td>{formatDateTime(item.createdAt)}</td>
-                    <td>{item.message || "-"}</td>
+                    <td data-label="Created">{formatDateTime(item.createdAt)}</td>
+                    <td data-label="Message">{item.message || "-"}</td>
                   </tr>
                 ))}
               </tbody>

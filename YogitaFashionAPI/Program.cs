@@ -2,6 +2,7 @@ using System.Text;
 using System.IO;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
@@ -192,6 +193,35 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        var logger = context.RequestServices
+            .GetRequiredService<ILoggerFactory>()
+            .CreateLogger("GlobalExceptionHandler");
+        var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+
+        if (exception != null)
+        {
+            logger.LogError(exception, "Unhandled exception for {Method} {Path}", context.Request.Method, context.Request.Path);
+        }
+
+        if (context.Response.HasStarted)
+        {
+            return;
+        }
+
+        context.Response.Clear();
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new
+        {
+            message = "An unexpected error occurred. Please try again later."
+        });
+    });
+});
 
 using (var scope = app.Services.CreateScope())
 {

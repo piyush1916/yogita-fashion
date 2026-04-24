@@ -38,10 +38,11 @@ namespace YogitaFashionAPI.Controllers
             }
 
             var items = await _db.WishlistItems
+                .AsNoTracking()
                 .Where(item => item.UserId == targetUserId)
                 .OrderByDescending(item => item.Id)
                 .ToListAsync();
-            return Ok(items);
+            return Ok(items.Select(ToWishlistResponse));
         }
 
         [HttpPost]
@@ -91,7 +92,7 @@ namespace YogitaFashionAPI.Controllers
                     ["targetUserId"] = existing.UserId,
                     ["alreadyExists"] = true
                 });
-                return Ok(existing);
+                return Ok(ToWishlistResponse(existing));
             }
 
             var item = new WishlistItem
@@ -108,7 +109,7 @@ namespace YogitaFashionAPI.Controllers
                 ["productId"] = item.ProductId,
                 ["targetUserId"] = item.UserId
             });
-            return Ok(item);
+            return Ok(ToWishlistResponse(item));
         }
 
         [HttpDelete("{productId:int}")]
@@ -162,6 +163,17 @@ namespace YogitaFashionAPI.Controllers
         {
             var role = User.FindFirstValue(ClaimTypes.Role) ?? "";
             return string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static object ToWishlistResponse(WishlistItem item)
+        {
+            return new
+            {
+                wishlistItemId = item.Id,
+                userId = item.UserId,
+                productId = item.ProductId,
+                createdAt = item.CreatedAt
+            };
         }
     }
 }

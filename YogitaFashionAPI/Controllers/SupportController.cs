@@ -12,6 +12,15 @@ namespace YogitaFashionAPI.Controllers
     [ApiController]
     public class SupportController : ControllerBase
     {
+        private static readonly Dictionary<string, string> AllowedStatuses = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Open"] = "Open",
+            ["Pending"] = "Pending",
+            ["In Progress"] = "In Progress",
+            ["Resolved"] = "Resolved",
+            ["Closed"] = "Closed"
+        };
+
         private readonly IConfiguration _configuration;
         private readonly INotificationService _notificationService;
         private readonly AppDbContext _db;
@@ -34,9 +43,10 @@ namespace YogitaFashionAPI.Controllers
         public async Task<IActionResult> GetRequests()
         {
             var items = await _db.SupportRequests
+                .AsNoTracking()
                 .OrderByDescending(item => item.CreatedAt)
                 .ToListAsync();
-            return Ok(items);
+            return Ok(items.Select(ToSupportResponse));
         }
 
         [HttpGet("requests/my")]
@@ -53,13 +63,14 @@ namespace YogitaFashionAPI.Controllers
             var requesterPhone = NormalizePhone(User.FindFirstValue("phone") ?? "");
 
             var items = await _db.SupportRequests
+                .AsNoTracking()
                 .Where(item =>
                     item.UserId == requesterId.Value ||
                     (!string.IsNullOrWhiteSpace(requesterEmail) && (item.Email ?? "").ToLower() == requesterEmail) ||
                     (!string.IsNullOrWhiteSpace(requesterPhone) && (item.Phone ?? "") == requesterPhone))
                 .OrderByDescending(item => item.CreatedAt)
                 .ToListAsync();
-            return Ok(items);
+            return Ok(items.Select(ToSupportResponse));
         }
 
         [HttpPost("requests")]
@@ -128,7 +139,55 @@ namespace YogitaFashionAPI.Controllers
             }, request.UserId.GetValueOrDefault() > 0 ? request.UserId : null);
             await SendSupportRequestEmail(request);
 
-            return Ok(request);
+            return Ok(ToSupportResponse(request));
+        }
+
+        [HttpPatch("requests/{id:int}/status")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateSupportRequestStatusRequest input)
+        {
+            if (input == null)
+            {
+                await _auditLogService.WriteAsync(User, HttpContext, "SupportRequestStatusUpdate", "Support", id.ToString(), "Failure", new Dictionary<string, object?>
+                {
+                    ["reason"] = "missing_payload"
+                });
+                return BadRequest(new { message = "Status payload is required." });
+            }
+
+            var request = await _db.SupportRequests.FirstOrDefaultAsync(item => item.Id == id);
+            if (request == null)
+            {
+                await _auditLogService.WriteAsync(User, HttpContext, "SupportRequestStatusUpdate", "Support", id.ToString(), "Failure", new Dictionary<string, object?>
+                {
+                    ["reason"] = "not_found"
+                });
+                return NotFound(new { message = "Support request not found." });
+            }
+
+            var nextStatusInput = (input.Status ?? "").Trim();
+            if (!AllowedStatuses.TryGetValue(nextStatusInput, out var nextStatus))
+            {
+                await _auditLogService.WriteAsync(User, HttpContext, "SupportRequestStatusUpdate", "Support", id.ToString(), "Failure", new Dictionary<string, object?>
+                {
+                    ["reason"] = "invalid_status",
+                    ["status"] = nextStatusInput
+                }, request.UserId.GetValueOrDefault() > 0 ? request.UserId : null);
+                return BadRequest(new { message = "Invalid support status." });
+            }
+
+            var previousStatus = request.Status;
+            request.Status = nextStatus;
+            request.UpdatedAt = DateTime.UtcNow;
+
+            await _db.SaveChangesAsync();
+            await _auditLogService.WriteAsync(User, HttpContext, "SupportRequestStatusUpdate", "Support", request.Id.ToString(), "Success", new Dictionary<string, object?>
+            {
+                ["fromStatus"] = previousStatus,
+                ["toStatus"] = request.Status
+            }, request.UserId.GetValueOrDefault() > 0 ? request.UserId : null);
+
+            return Ok(ToSupportResponse(request));
         }
 
         private async Task SendSupportRequestEmail(SupportRequest request)
@@ -213,5 +272,29 @@ namespace YogitaFashionAPI.Controllers
             var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             return int.TryParse(idClaim, out var parsedId) ? parsedId : null;
         }
+
+        private static object ToSupportResponse(SupportRequest request)
+        {
+            return new
+            {
+                id = request.Id,
+                userId = request.UserId,
+                name = request.Name,
+                contact = request.Contact,
+                subject = request.Subject,
+                orderId = request.OrderId,
+                message = request.Message,
+                email = request.Email,
+                phone = request.Phone,
+                status = request.Status,
+                createdAt = request.CreatedAt,
+                updatedAt = request.UpdatedAt
+            };
+        }
+    }
+
+    public class UpdateSupportRequestStatusRequest
+    {
+        public string Status { get; set; } = "";
     }
 }

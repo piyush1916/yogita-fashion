@@ -23,6 +23,7 @@ body{
 }
 
 a{color:inherit; text-decoration:none;}
+img{max-width:100%; display:block;}
 .container{width:min(1200px, 92%); margin: 0 auto;}
 
 /* ===== Header (Final) ===== */
@@ -580,8 +581,28 @@ a{color:inherit; text-decoration:none;}
   max-width: 1100px;
   margin: auto;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 30px;
+}
+
+.footer-col,
+.footer-col p,
+.footer-bottom,
+.newsletter,
+.profileCard,
+.profileSidebar,
+.profileMain,
+.ordersCardContent {
+  min-width: 0;
+}
+
+.footer-col p,
+.profileTitle,
+.profileSectionTitle,
+.profileSubtext,
+.ordersCardContent h2,
+.ordersCardContent p {
+  overflow-wrap: anywhere;
 }
 
 .footer-col h3 {
@@ -597,12 +618,14 @@ a{color:inherit; text-decoration:none;}
 .newsletter {
   display: flex;
   margin-top: 10px;
+  gap: 8px;
 }
 
 .newsletter input {
   flex: 1;
   padding: 8px;
   border: none;
+  min-width: 0;
 }
 
 .newsletter button {
@@ -618,10 +641,33 @@ a{color:inherit; text-decoration:none;}
   padding-top: 10px;
   display: flex;
   justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .social span {
   margin-left: 10px;
+}
+
+@media (max-width: 900px) {
+  .footer-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .footer-container {
+    grid-template-columns: 1fr;
+  }
+
+  .newsletter {
+    flex-direction: column;
+  }
+
+  .newsletter input,
+  .newsletter button {
+    width: 100%;
+  }
 }
 
 /* --- Auth pages --- */
@@ -1120,6 +1166,7 @@ a{color:inherit; text-decoration:none;}
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  flex-wrap: wrap;
 }
 .profileMetaRow span {
   color: rgba(233, 233, 255, 0.72);

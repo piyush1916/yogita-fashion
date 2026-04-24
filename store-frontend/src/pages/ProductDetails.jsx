@@ -142,10 +142,10 @@ const ProductDetails = () => {
   return (
     <div className="container mx-auto px-4 py-10">
       <div className="flex flex-col lg:flex-row gap-10">
-        <div className="lg:w-1/2">
+        <div className="min-w-0 lg:w-1/2">
           <ProductGallery images={product.images} />
         </div>
-        <div className="lg:w-1/2 space-y-4">
+        <div className="min-w-0 space-y-4 lg:w-1/2">
           <h1 className="text-2xl font-bold">{product.title}</h1>
           <div className="flex items-center space-x-2">
             <span className="text-xl font-semibold">{formatCurrency(product.price)}</span>
@@ -177,7 +177,7 @@ const ProductDetails = () => {
               onClick={handleAdd}
               disabled={!variant.size || !variant.color || stock <= 0}
               className={[
-                "px-4 py-2 rounded text-white",
+                "w-full rounded px-4 py-2 text-white sm:w-auto",
                 !variant.size || !variant.color || stock <= 0
                   ? "bg-slate-400 cursor-not-allowed"
                   : "bg-indigo-600",
@@ -188,7 +188,7 @@ const ProductDetails = () => {
             <button
               onClick={handleWishlist}
               className={[
-                "px-4 py-2 rounded border",
+                "w-full rounded border px-4 py-2 sm:w-auto",
                 wished
                   ? "border-rose-300 bg-rose-100 text-rose-700"
                   : "border-slate-300 bg-white text-slate-700",
